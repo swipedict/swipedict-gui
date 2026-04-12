@@ -115,11 +115,19 @@
             {{ $t('welcome.registerLink') }}
          </RouterLink>
      </div>
+
+  <!-- Version badge -->
+  <div class="text-center pt-4 pb-2">
+    <span class="text-[10px] text-slate-400 dark:text-slate-600 font-mono select-none">
+      <template v-if="buildInfo">{{ buildInfo.appVersion }} &middot; {{ buildInfo.appBuildDate }}</template>
+    </span>
+  </div>
+
   </PageWrapper>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import PageWrapper from '@/components/layout/PageWrapper.vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
@@ -139,4 +147,12 @@ const { t } = useI18n();
 const appStore = useAppStore();
 
 const isLoading = computed(() => !appStore.checkedInitialUserStatus || !appStore.globalIndexLoaded);
+
+const buildInfo = ref<{ appVersion: string; appBuildDate: string } | null>(null);
+onMounted(async () => {
+    try {
+        const res = await fetch('/cicd.json?t=' + Date.now());
+        if (res.ok) buildInfo.value = await res.json();
+    } catch { /* ignore */ }
+});
 </script>

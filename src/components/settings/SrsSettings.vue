@@ -1,7 +1,7 @@
 <template>
     <CollapsibleSection :title="$t('userSettings.tabs.srs')">
       <div class="space-y-6 pt-3">
-         <h2 class="text-lg font-medium text-gray-800 mb-1">{{ $t('userSettings.srsSettingsTitle') }}</h2>
+         <h2 class="text-lg font-medium text-gray-800 dark:text-slate-100 mb-1">{{ $t('userSettings.srsSettingsTitle') }}</h2>
          <div class="setting-item">
              <label for="newCardsPerDay" class="setting-label-block">
                <span class="setting-label-main">{{ $t('userSettings.newCardsPerDayLabel') }}</span>
