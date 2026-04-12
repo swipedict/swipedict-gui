@@ -1,6 +1,5 @@
 <template>
   <div v-if="senses && senses.length > 0" class="border-b border-gray-200 dark:border-slate-700 pb-4">
-    <h3 class="text-lg font-semibold text-gray-700 dark:text-slate-200 mb-3">{{ $t('detailView.sections.nuancesOf') }} <span class="text-green-700 dark:text-green-400">{{ wordDetail?.target?.headword || '?' }}</span></h3>
     <div class="space-y-4 pl-2">
       <div v-for="(sense, sIndex) in senses" :key="`sense-${sIndex}`" class="border-l-2 border-blue-200 dark:border-blue-700/60 pl-3 pb-3 last:pb-0">
         <h4 class="text-md font-semibold text-gray-700 dark:text-slate-200 mb-1">{{ sense.gloss }}</h4>

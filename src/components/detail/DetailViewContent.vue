@@ -69,7 +69,13 @@
             <div v-if="hasContent(wordDetailData.tags)" class="flex items-start"><span class="font-medium w-[90px] inline-block flex-shrink-0 text-gray-400 dark:text-slate-500 mt-px">{{ $t('detailView.metadata.tags') }}</span><div class="flex flex-wrap gap-x-1.5 gap-y-0.5"><span v-for="tag in wordDetailData.tags" :key="tag" class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-1.5 py-px rounded-sm text-[0.7rem] leading-tight">{{ tag }}</span></div></div>
         </div>
         
-        <DetailSensesSection :senses="wordDetailData.senses" :word-detail="wordDetailData" :word-id="props.wordId" :dictionary-path="props.dictionaryPath" :visibility-control="exampleVisibility" />
+        <CollapsibleSection
+            v-if="wordDetailData.senses && wordDetailData.senses.length > 0"
+            :title="$t('detailView.sections.nuancesOf') + ' ' + (wordDetailData.target?.headword || wordDetailData.source.headword)"
+            :start-open="true"
+        >
+            <DetailSensesSection :senses="wordDetailData.senses" :word-detail="wordDetailData" :word-id="props.wordId" :dictionary-path="props.dictionaryPath" :visibility-control="exampleVisibility" />
+        </CollapsibleSection>
 
         <div v-if="hasContent(wordDetailData.relatedWords) || hasContent(wordDetailData.antonyms)" class="border-b border-gray-200 dark:border-slate-700 pb-4">
              <div v-if="hasContent(wordDetailData.relatedWords)" class="mb-4 last:mb-0"><h4 class="text-md font-semibold text-gray-600 dark:text-slate-300 mb-2">{{ $t('detailView.sections.relatedWords') }}</h4><HorizontalWordList :items="wordDetailData.relatedWords!" :word-detail="wordDetailData" item-type="related" :word-id="props.wordId" :dictionary-path="props.dictionaryPath" :source-lang-label="wordDetailData.sourceLanguage.toUpperCase()" :target-lang-label="wordDetailData.targetLanguage.toUpperCase()" :source-lang-code="wordDetailData.sourceLanguage" :target-lang-code="wordDetailData.targetLanguage" /></div>
