@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized, type NavigationGuardNext } from 'vue-router';
+import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized } from 'vue-router';
 import { useAppStore } from '@/stores/appStore';
 import emitter from '@/services/emitter';
 
@@ -34,16 +34,16 @@ const routes: Array<RouteRecordRaw> = [
     path: '/d/:dictionaryPath',
     name: 'deepLinkToDict',
     meta: { requiresDictionaryPathInParams: true },
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (to) => {
         const appStore = useAppStore();
         const dictPath = to.params.dictionaryPath as string;
         
         if (appStore.availableDictionaries.some(d => d.path === dictPath)) {
             appStore.selectDictionary(dictPath);
-            next({ name: 'dictionaryBrowser', params: { dictionaryPath: dictPath }, replace: true });
+            return { name: 'dictionaryBrowser', params: { dictionaryPath: dictPath }, replace: true };
         } else {
             emitter.emit('show-notification', { message: `Wörterbuch '${dictPath}' nicht gefunden.`, type: 'error' });
-            next({ name: 'dictionarySelection', replace: true });
+            return { name: 'dictionarySelection', replace: true };
         }
     }
   },
@@ -80,21 +80,20 @@ const routes: Array<RouteRecordRaw> = [
     path: '/dictionary',
     name: 'dictionaryBrowserBase',
     meta: {},
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (to) => {
         const appStoreInst = useAppStore();
         if (to.params.dictionaryPath) {
-            next();
             return;
         }
         const lastSelected = appStoreInst.selectedDictionaryPath;
         const isValidLastSelected = lastSelected && appStoreInst.availableDictionaries.some(d => d.path === lastSelected);
         if (isValidLastSelected) {
-            next({ name: 'dictionaryBrowser', params: { dictionaryPath: lastSelected! }, replace: true });
+            return { name: 'dictionaryBrowser', params: { dictionaryPath: lastSelected! }, replace: true };
         } else if (appStoreInst.availableDictionaries.length > 0) {
             const firstDictPath = appStoreInst.availableDictionaries[0].path;
-            next({ name: 'dictionaryBrowser', params: { dictionaryPath: firstDictPath }, replace: true });
+            return { name: 'dictionaryBrowser', params: { dictionaryPath: firstDictPath }, replace: true };
         } else {
-            next({ name: 'dictionarySelection', replace: true });
+            return { name: 'dictionarySelection', replace: true };
         }
     },
     children: [
@@ -144,9 +143,9 @@ const routes: Array<RouteRecordRaw> = [
     path: '/:pathMatch(.*)*',
     name: 'notFound',
     component: () => import('@/views/WelcomeView.vue'), 
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (to) => {
         console.warn(`Router: Path not found - "${to.fullPath}", redirecting to root.`);
-        next({ name: 'root', replace: true });
+        return { name: 'root', replace: true };
     }
   }
 ];
@@ -161,7 +160,7 @@ const router = createRouter({
   },
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
     const appStore = useAppStore();
 
     if (typeof window !== 'undefined' && window.speechSynthesis?.speaking) {
@@ -182,18 +181,16 @@ router.beforeEach(async (to, from, next) => {
     const guestOnly = to.matched.some(r => r.meta.guestOnly);
 
     if (to.name === 'root') {
-        return next(isUserRegistered ? { name: 'welcome', replace: true } : { name: 'register', replace: true });
+        return isUserRegistered ? { name: 'welcome', replace: true } : { name: 'register', replace: true };
     }
 
     if (requiresAuth && !isUserRegistered) {
-        return next({ name: 'register', query: { redirect: to.fullPath } });
+        return { name: 'register', query: { redirect: to.fullPath } };
     }
     
     if (guestOnly && isUserRegistered) {
-         return next({ name: 'welcome' });
+        return { name: 'welcome' };
     }
-
-    next();
 });
 
 router.onError((error, to, from) => {

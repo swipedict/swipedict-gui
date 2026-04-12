@@ -16,7 +16,7 @@ const generateBuildInfoPlugin = () => {
       if (file.endsWith('package.json')) {
         console.log('package.json changed, regenerating build info...');
         generateBuildInfo();
-        server.ws.send({ type: 'full-reload', path: '*' });
+        server.hot.send({ type: 'full-reload', path: '*' });
       }
     },
   }

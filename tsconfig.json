@@ -11,10 +11,9 @@
    "compilerOptions": {
      "esModuleInterop": true,
      "skipLibCheck": true,
-     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     }
   }

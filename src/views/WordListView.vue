@@ -371,13 +371,12 @@ onDeactivated(() => {
     effectiveTargetItemIdForScroll.value = null;
 });
 
-onBeforeRouteLeave((to, from, next) => {
+onBeforeRouteLeave((to) => {
     if (to.name === 'detail' && lastInteractedWordId.value) {
         sessionStorage.setItem(SESSION_STORAGE_SCROLL_KEY.value, lastInteractedWordId.value);
     } else {
         sessionStorage.removeItem(SESSION_STORAGE_SCROLL_KEY.value);
     }
     lastInteractedWordId.value = null;
-    next();
 });
 </script>

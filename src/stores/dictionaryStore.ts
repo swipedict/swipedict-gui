@@ -124,18 +124,28 @@ export const useDictionaryStore = defineStore('dictionary', () => {
         }
     }
 
+    let _currentLoadPromise: Promise<void> | null = null;
+    let _currentLoadForPath: string | null = null;
+
     async function loadDictionaryIndex(path: string) {
         if (!path) {
             dictionaryError.value = "Kein Wörterbuchpfad angegeben.";
             return;
         }
 
+        // Deduplicate: if already loading this exact path, return the existing promise
+        if (_currentLoadForPath === path && _currentLoadPromise) {
+            return _currentLoadPromise;
+        }
+
         if (currentLoadController) {
             currentLoadController.abort('new_dictionary_load');
         }
+        _currentLoadForPath = path;
         currentLoadController = new AbortController();
         const signal = currentLoadController.signal;
 
+        const doLoad = async () => {
         isLoadingIndex.value = true;
         dictionaryError.value = null;
 
@@ -205,7 +215,15 @@ export const useDictionaryStore = defineStore('dictionary', () => {
             }
         } finally {
             isLoadingIndex.value = false;
+            if (_currentLoadForPath === path) {
+                _currentLoadPromise = null;
+                _currentLoadForPath = null;
+            }
         }
+        };
+
+        _currentLoadPromise = doLoad();
+        return _currentLoadPromise;
     }
 
     function setTopicFilter(topicId: string | null) {
