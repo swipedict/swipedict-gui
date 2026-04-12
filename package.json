@@ -1,0 +1,44 @@
+{
+  "name": "swipedict",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 vite",
+    "backend": "http-server ../swipedict-dictionaries -p 8080 --cors -c-1",
+    "build": "node scripts/pre-build.js && vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@heroicons/vue": "^2.2.0",
+    "@types/diff": "^7.0.2",
+    "chart.js": "^4.5.1",
+    "dexie": "^3.2.7",
+    "diff": "^8.0.3",
+    "jszip": "^3.10.1",
+    "mitt": "^3.0.1",
+    "pinia": "^2.1.7",
+    "vue": "^3.5.29",
+    "vue-advanced-cropper": "^2.8.9",
+    "vue-chartjs": "^5.3.3",
+    "vue-cookie-next": "^1.3.0",
+    "vue-i18n": "^11.3.0",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@tsconfig/node20": "^20.1.9",
+    "@types/jszip": "^3.4.0",
+    "@types/node": "^22.0.0",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "@vue/tsconfig": "^0.9.0",
+    "cross-env": "^10.1.0",
+    "http-server": "^14.1.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.0",
+    "vite": "^6.4.1",
+    "vite-plugin-pwa": "^1.2.0",
+    "vue-tsc": "^2.2.12"
+  }
+}
