@@ -97,6 +97,7 @@
   "register": {
     "title": "Welcome!",
     "prompt": "Please enter a username to save your learning progress.",
+    "localOnlyNotice": "Your data is stored locally in your browser only and is never sent to a server.",
     "usernameLabel": "Username",
     "usernamePlaceholder": "Your username",
     "languageLabel": "Preferred Interface Language",

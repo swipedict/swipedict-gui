@@ -1,6 +1,6 @@
 <template>
     <!-- Glassmorphism Sticky Header for Lists -->
-    <div class="w-full overflow-x-hidden px-3 sm:px-4 py-3 sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700 transition-all duration-300
+    <div class="w-full px-3 sm:px-4 py-3 sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700 transition-all duration-300
                 bg-white/80 dark:bg-surface-900/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
         
         <!-- Row 1: Title + Actions -->

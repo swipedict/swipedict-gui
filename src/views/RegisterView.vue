@@ -2,8 +2,11 @@
   <div class="flex items-center justify-center min-h-[calc(100vh-150px)] px-4">
     <div class="w-full max-w-md bg-white dark:bg-slate-900 dark:border dark:border-slate-700/60 p-8 rounded-xl shadow-lg text-center">
       <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-slate-100">{{ $t('register.title') }}</h1>
-      <p class="text-gray-600 dark:text-slate-400 mb-8">
+      <p class="text-gray-600 dark:text-slate-400 mb-4">
         {{ $t('register.prompt') }}
+      </p>
+      <p class="text-xs text-gray-400 dark:text-slate-500 mb-8">
+        🔒 {{ $t('register.localOnlyNotice') }}
       </p>
 
       <form @submit.prevent="handleRegistration">
