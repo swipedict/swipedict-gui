@@ -2,13 +2,18 @@
  * Global application configuration settings.
  */
 
-// The base URL for the backend API that serves dictionary files, audio, etc.
-// MODIFICATION: Use local proxy in DEV mode to avoid CORS errors
+// The base URL for the backend API (feedback, etc.) — stays on Netcup
 export const API_ENDPOINT = import.meta.env.DEV 
   ? '/api-proxy/api.php' 
   : 'https://app.swipedict.com/api.php';
 
+// The base URL for dictionary JSON files (index, word details)
 export const BASE_SERVER_URL = import.meta.env.DEV 
+  ? '/api-proxy/dist' 
+  : 'https://swipedict.github.io/swipedict-dictionaries';
+
+// The base URL for media files (audio) — stays on Netcup
+export const MEDIA_BASE_URL = import.meta.env.DEV 
   ? '/api-proxy/dist' 
   : 'https://app.swipedict.com';
 

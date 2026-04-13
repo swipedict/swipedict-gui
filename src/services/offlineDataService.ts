@@ -1,5 +1,5 @@
 import { useDictionaryStore } from '@/stores/dictionaryStore';
-import { BASE_SERVER_URL } from '@/config';
+import { BASE_SERVER_URL, MEDIA_BASE_URL } from '@/config';
 import type { DictionaryMeta } from '@/types';
 
 const AUDIO_CACHE_NAME = 'swipedict-audio-cache-v1';
@@ -28,7 +28,7 @@ export async function downloadDictionaryAudio(
     const audioUrls = words
         .map(word => word.target?.audioUrl)
         .filter((url): url is string => !!url)
-        .map(relativeUrl => `${BASE_SERVER_URL}${relativeUrl}`);
+        .map(relativeUrl => `${MEDIA_BASE_URL}${relativeUrl}`);
 
     const cache = await caches.open(AUDIO_CACHE_NAME);
     let completed = 0;

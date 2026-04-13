@@ -3,7 +3,7 @@ import type { Ref } from 'vue';
 import { speakText, cancelSpeech } from '@/services/tts';
 import { getLanguageCode } from '@/utils/languageUtils';
 import emitter from '@/services/emitter';
-import { BASE_SERVER_URL } from '@/config';
+import { MEDIA_BASE_URL } from '@/config';
 import { useAppStore } from '@/stores/appStore';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
 
@@ -189,7 +189,7 @@ export async function playAudio(playbackType: PlaybackType, payload: PlaybackPay
         finalSourceUrl = payload.userAudioDataUrl;
     } 
     else if (payload.sourceUrl) {
-        finalSourceUrl = `${BASE_SERVER_URL}${payload.sourceUrl}`;
+        finalSourceUrl = `${MEDIA_BASE_URL}${payload.sourceUrl}`;
     }
     
     console.log(`[AudioPlayer - ${payload.identifier}] playAudio called. Type: ${playbackType}, URL: ${finalSourceUrl || 'N/A'}, TTS: "${payload.textToSpeak || ''}"`);
@@ -270,7 +270,7 @@ export async function prefetchTargetAudio(dictionaryPath: string): Promise<void>
         const audioUrlsToFetch = words
             .map(word => word.target?.audioUrl)
             .filter((url): url is string => !!url)
-            .map(relativeUrl => `${BASE_SERVER_URL}${relativeUrl}`);
+            .map(relativeUrl => `${MEDIA_BASE_URL}${relativeUrl}`);
 
         prefetchTotal.value = audioUrlsToFetch.length;
         if (audioUrlsToFetch.length === 0) {
