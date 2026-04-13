@@ -22,6 +22,16 @@
       })();
     </script>
 
+    <!-- GitHub Pages SPA: restore path from redirect query param -->
+    <script>
+      (function(){
+        var p = window.location.search.match(/[?&]p=([^&]*)/);
+        if (p) {
+          window.history.replaceState(null, null, decodeURIComponent(p[1]) + window.location.hash);
+        }
+      })();
+    </script>
+
     <!-- Fonts: Outfit (Headings) & Inter (Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
