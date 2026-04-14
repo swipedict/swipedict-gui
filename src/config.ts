@@ -8,9 +8,16 @@ export const API_ENDPOINT = import.meta.env.DEV
   : 'https://app.swipedict.com/api.php';
 
 // The base URL for dictionary JSON files (index, word details)
-export const BASE_SERVER_URL = import.meta.env.DEV 
-  ? '/api-proxy/dist' 
-  : 'https://swipedict.github.io/swipedict-dictionaries';
+// Each deployment serves its own dict JSONs:
+//   app.swipedict.com       → /dist  (SFTP deploy)
+//   swipedict.github.io     → /swipedict-dictionaries (GH Pages project repo)
+const DICT_PATH: Record<string, string> = {
+  'app.swipedict.com': '/dist',
+  'swipedict.github.io': '/swipedict-dictionaries',
+};
+export const BASE_SERVER_URL = import.meta.env.DEV
+  ? '/api-proxy/dist'
+  : (DICT_PATH[globalThis.location?.hostname] ?? '/dist');
 
 // The base URL for media files (audio) — stays on Netcup
 export const MEDIA_BASE_URL = import.meta.env.DEV 
