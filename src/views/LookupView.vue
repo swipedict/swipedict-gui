@@ -58,6 +58,32 @@
         <!-- No results -->
         <div v-else-if="trimmedQuery" class="text-center py-8 space-y-4">
             <p class="text-gray-600 dark:text-slate-300">{{ $t('lookup.noResults', { term: trimmedQuery }) }}</p>
+
+            <!-- Capture on miss -->
+            <div v-if="captureStore.isCaptured(trimmedQuery)" class="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                <CheckCircleIcon class="w-5 h-5" />
+                {{ $t('lookup.alreadyCaptured') }}
+                <router-link :to="{ name: 'captures' }" class="underline hover:text-emerald-500">{{ $t('lookup.viewCaptures') }}</router-link>
+            </div>
+            <div v-else class="max-w-md mx-auto text-left space-y-2 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                <p class="text-sm font-semibold text-gray-700 dark:text-slate-200">{{ $t('lookup.captureTitle') }}</p>
+                <textarea
+                    v-model="captureContext"
+                    rows="2"
+                    :placeholder="$t('lookup.captureContextPlaceholder')"
+                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-slate-600
+                           bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                ></textarea>
+                <button
+                    type="button"
+                    class="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
+                    @click="captureCurrentTerm"
+                >
+                    {{ $t('lookup.captureButton', { term: trimmedQuery }) }}
+                </button>
+            </div>
+
             <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
                 <a
                     :href="`https://dexonline.ro/definitie/${encodeURIComponent(trimmedQuery)}`"
@@ -82,26 +108,39 @@
         <p v-else class="text-center text-sm text-gray-400 dark:text-slate-500 py-8">
             {{ $t('lookup.hint') }}
         </p>
+
+        <!-- Captures link -->
+        <p v-if="captureStore.captureCount > 0" class="text-center mt-6">
+            <router-link :to="{ name: 'captures' }" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                {{ $t('lookup.capturesLink', { count: captureStore.captureCount }) }}
+            </router-link>
+        </p>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
+import { useCaptureStore } from '@/stores/captureStore';
 import { playSoundForItem } from '@/composables/useWordAudio';
 import { normalizeSearchText, stripRomanianInflection, stripRomanianVerbMarker } from '@/utils/textUtils';
+import emitter from '@/services/emitter';
 import type { WordEntry, GrammaticalGenus } from '@/types';
 import PageHeader from '@/components/layout/PageHeader.vue';
-import { MagnifyingGlassIcon, SpeakerWaveIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline';
+import { MagnifyingGlassIcon, SpeakerWaveIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{ dictionaryPath: string }>();
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const dictionaryStore = useDictionaryStore();
+const captureStore = useCaptureStore();
 
 const query = ref(typeof route.query.q === 'string' ? route.query.q : '');
+const captureContext = ref('');
 const searchInput = useTemplateRef('searchInput');
 const trimmedQuery = computed(() => query.value.trim());
 
@@ -112,10 +151,19 @@ watch(trimmedQuery, (q) => {
 
 onMounted(async () => {
     searchInput.value?.focus();
+    if (!captureStore.isLoaded) captureStore.loadCapturedWords();
     // The store's watcher only loads on dictionary *change*; on a fresh page load with
     // the dictionary already selected nothing fires, so load explicitly (same as WordListView).
     await dictionaryStore.loadDictionaryIndex(props.dictionaryPath);
 });
+
+async function captureCurrentTerm() {
+    const term = trimmedQuery.value;
+    if (!term) return;
+    await captureStore.capture({ term, context: captureContext.value, dictionaryPath: props.dictionaryPath });
+    captureContext.value = '';
+    emitter.emit('show-notification', { message: t('lookup.captured', { term }), type: 'success', duration: 2500 });
+}
 
 const MAX_RESULTS = 50;
 

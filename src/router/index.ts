@@ -92,6 +92,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresDictionaryPathInParams: true },
     beforeEnter: [checkDictionaryContext]
   },
+  {
+    path: '/captures',
+    name: 'captures',
+    component: () => import('@/views/CapturedWordsView.vue')
+  },
   // --- REFACTORED ROUTES ---
   {
     path: '/explore/:dictionaryPath/:topicId', 

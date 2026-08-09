@@ -21,6 +21,7 @@ async function gatherFullStateData(): Promise<Omit<StateExportManifest, 'mediaMa
     const allProgressRecords = await db.userProgress.toArray();
     const allSrsData = await db.srsData.toArray();
     const allMediaData = await db.wordMedia.toArray();
+    const allCapturedWords = await db.capturedWords.toArray();
 
     const progressByDictionary: { [key: string]: UserProgressMap } = {};
     allProgressRecords.forEach(record => {
@@ -36,6 +37,7 @@ async function gatherFullStateData(): Promise<Omit<StateExportManifest, 'mediaMa
         userProgress: progressByDictionary,
         srsData: allSrsData,
         allMedia: allMediaData,
+        capturedWords: allCapturedWords,
     };
 }
 
@@ -234,7 +236,13 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
 
             if (itemsToPut.length > 0) await db.srsData.bulkPut(itemsToPut);
         }
-        
+
+        // 2b. Merge captured words (added in format 1.2; keyed by id, put is idempotent).
+        // Not filtered by dictionary — captures must survive even if their dictionary is gone.
+        if (manifest.capturedWords?.length) {
+            await db.capturedWords.bulkPut(manifest.capturedWords);
+        }
+
         // 3. Smart Patch Media Data
         if (manifest.mediaManifest) {
             const totalMedia = manifest.mediaManifest.length;

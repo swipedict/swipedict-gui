@@ -670,6 +670,21 @@
     "noResults": "No entry found for \"{term}\".",
     "searchDexonline": "Search on dexonline.ro",
     "searchWiktionary": "Search on Wiktionary",
-    "hint": "Inflected forms work too — try \"cainelui\" or \"plecase\"."
+    "hint": "Inflected forms work too — try \"cainelui\" or \"plecase\".",
+    "alreadyCaptured": "Already in your captured words.",
+    "viewCaptures": "View",
+    "captureTitle": "Save for later?",
+    "captureContextPlaceholder": "Optional: the sentence where you found it…",
+    "captureButton": "Capture \"{term}\"",
+    "captured": "\"{term}\" captured.",
+    "capturesLink": "My captured words ({count})"
+  },
+  "captures": {
+    "title": "Captured Words",
+    "count": "{n} word | {n} words",
+    "export": "Export JSON",
+    "openDexonline": "Look up on dexonline.ro",
+    "delete": "Delete",
+    "empty": "Nothing captured yet. When a lookup finds no entry, you can save the word here."
   }
 }

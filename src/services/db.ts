@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type {
     GlobalIndex, CachedGlobalIndex, CachedDictionaryIndexTimestamp,
     UserProgressMap, WordMediaData, UserInfo, AppSettings, CachedAppSettings,
-    SrsData, ImageThumbnail, DictionaryIndexContent
+    SrsData, ImageThumbnail, DictionaryIndexContent, CapturedWord
 } from '@/types';
 import { srsUniqueId } from '@/types';
 import { clearAudioCache } from '@/composables/useAudioPlayer';
@@ -32,10 +32,11 @@ export class SwipeDictDexie extends Dexie {
   introducedToday!: Table<{ uniqueId: string; dateIntroduced: string }, string>;
   imageThumbnails!: Table<ImageThumbnail, string>;
   cachedIndexes!: Table<CachedDictionaryIndex, string>;
+  capturedWords!: Table<CapturedWord, string>;
 
   constructor() {
     super('SwipeDictDB_v4');
-    
+
     this.version(DB_VERSION).stores({
       globalDictionaries: 'id',
       dictionaryIndexTimestamps: 'dictionaryPath',
@@ -47,6 +48,11 @@ export class SwipeDictDexie extends Dexie {
       introducedToday: '&uniqueId, dateIntroduced',
       imageThumbnails: 'id',
       cachedIndexes: 'path',
+    });
+
+    // v2: capture inbox for lookup misses. Additive — earlier tables carry forward.
+    this.version(2).stores({
+      capturedWords: '&id, normalizedTerm, createdAt',
     });
   }
 }
@@ -200,7 +206,15 @@ export async function clearAllLocalData(): Promise<void> {
         db.userSettings.clear(), db.globalDictionaries.clear(),
         db.dictionaryIndexTimestamps.clear(), db.srsData.clear(),
         db.introducedToday.clear(), db.imageThumbnails.clear(),
-        db.cachedIndexes.clear(),
+        db.cachedIndexes.clear(), db.capturedWords.clear(),
     ]);
     await clearAudioCache();
+}
+
+// --- Captured Words (lookup-miss inbox) ---
+
+export async function saveCapturedWord(word: CapturedWord): Promise<void> { await db.capturedWords.put(word); }
+export async function deleteCapturedWord(id: string): Promise<void> { await db.capturedWords.delete(id); }
+export async function getAllCapturedWords(): Promise<CapturedWord[]> {
+    return await db.capturedWords.orderBy('createdAt').reverse().toArray();
 }

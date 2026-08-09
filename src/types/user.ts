@@ -35,3 +35,35 @@ export interface CachedAppSettings {
     id: 'user';
     settings: AppSettings;
 }
+
+/**
+ * A word captured on a lookup miss (e.g. while reading a book) — the raw material
+ * for later enrichment into a full dictionary entry. Lives only in local storage
+ * and backups until promoted by the enrichment pipeline.
+ */
+export interface CapturedWord {
+    id: string;
+    term: string;            // as encountered in the source text
+    normalizedTerm: string;  // normalizeSearchText(term), for dedup and lookup marking
+    context?: string;        // the sentence it appeared in
+    note?: string;
+    dictionaryPath: string;  // dictionary that was active at capture time
+    createdAt: number;
+}
+
+/**
+ * Shape of the backup ZIP's manifest.json (see stateService). capturedWords was added
+ * in format 1.2; older backups simply lack the field.
+ */
+export interface StateExportManifest {
+    exportFormatVersion: string;
+    timestamp: string;
+    syncVersion: number;
+    userInfo: { userName: string; locale?: string };
+    appSettings?: AppSettings;
+    userProgress: { [dictionaryPath: string]: UserProgressMap };
+    srsData: import('./srs').SrsData[];
+    allMedia?: import('./components').WordMediaData[];
+    mediaManifest: Array<Partial<import('./components').WordMediaData>>;
+    capturedWords?: CapturedWord[];
+}
