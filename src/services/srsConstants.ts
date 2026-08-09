@@ -20,3 +20,13 @@ export const HARD_PENALTY = 0.8;
 
 /** The interval (in days) at which a card is considered "mature". */
 export const MATURE_INTERVAL_DAYS = 21;
+
+/**
+ * Number of lapses after which a card is flagged as a "leech" — a word that keeps being
+ * forgotten and is soaking up review time. Matches Anki's default threshold.
+ *
+ * Flagging is deliberately non-destructive: the card is NOT suspended, because there is no
+ * UI to bring a suspended card back. It is surfaced in the learning summary so the user can
+ * act on it (add a drawing, image or mnemonic from the detail view).
+ */
+export const LEECH_THRESHOLD = 8;

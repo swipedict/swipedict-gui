@@ -23,7 +23,13 @@ const generateBuildInfoPlugin = () => {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Strip chatty logging from production bundles. console.warn/error are kept on purpose —
+  // real failures should still be visible in the field. `pure` (rather than `drop`) removes
+  // only calls whose value is unused, which is all of ours.
+  esbuild: mode === 'production'
+    ? { pure: ['console.log', 'console.debug', 'console.info'], drop: ['debugger'] }
+    : undefined,
   plugins: [
     generateBuildInfoPlugin(),
     tailwindcss(),
@@ -82,4 +88,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

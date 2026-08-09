@@ -21,7 +21,8 @@
     "done": "Fertig",
     "search": "Suchen",
     "edit": "Bearbeiten",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "indexLoadError": "Index konnte nicht geladen werden: {error}"
   },
   "languages": {
     "de": "Deutsch",
@@ -92,7 +93,8 @@
     "selectDictionary": "Wörterbuch wählen",
     "appVersion": "App Version",
     "userProfile": "{name}'s Profil | Profil",
-    "registerLogin": "Registrieren / Anmelden"
+    "registerLogin": "Registrieren / Anmelden",
+    "quickLookup": "Schnell nachschlagen"
   },
   "register": {
     "title": "Willkommen!",
@@ -209,7 +211,9 @@
     "aiProviderDescription": "Wählen Sie einen Anbieter für die Bildgenerierung. Sie benötigen einen eigenen API-Schlüssel.",
     "apiKeyLabel": "{provider} API Key",
     "apiKeyPlaceholder": "Ihr {provider} API-Schlüssel",
-    "keyStoredLocally": "Ihr Schlüssel wird nur lokal in Ihrem Browser gespeichert."
+    "keyStoredLocally": "Ihr Schlüssel wird nur lokal in Ihrem Browser gespeichert.",
+    "settingsSaved": "Einstellungen gespeichert.",
+    "settingsSaveError": "Fehler beim Speichern: {error}"
   },
   "dictionarySelection": {
     "title": "Wähle ein Wörterbuch",
@@ -251,9 +255,10 @@
     "srsFastReview": {
       "title": "SRS Fast Review",
       "loadingStatus": "Lade Status...",
-      "cardsDue": "{count} Karte fällig | {count} Karten fällig",
+      "cardsDue": "Fällige Karten",
       "noneDue": "Keine Karten fällig!",
-      "wellDone": "Sehr gut!"
+      "wellDone": "Sehr gut!",
+      "checking": "Prüfe..."
     },
     "learningSummary": {
       "title": "Zur Lernübersicht",
@@ -394,7 +399,10 @@
     "allSessionCardsDone": "Alle Karten für diese Sitzung abgeschlossen! Gut gemacht!",
     "noCardsDueOrNew": "Keine Karten zurzeit fällig oder für heute neu geplant.",
     "toTopicsLink": "Zur Themenauswahl",
-    "toLearningSummary": "Zur Lernübersicht"
+    "toLearningSummary": "Zur Lernübersicht",
+    "leechDetected": "\"{word}\" willst du einfach nicht behalten — öffne es und füge eine Zeichnung, ein Bild oder eine Aufnahme hinzu.",
+    "repeatSoon": "\"{word}\" wird bald wiederholt.",
+    "rateError": "Fehler beim Bewerten: {error}"
   },
   "learningSummary": {
     "pageTitle": "Lernfortschritt",
@@ -414,7 +422,9 @@
     "distributionTitle": "Kartenverteilung",
     "noDataForForecast": "Keine fälligen Karten in den nächsten 7 Tagen.",
     "noDataForDistribution": "Keine Karten zur Analyse der Verteilung.",
-    "startReviewButtonText": "Starte Fast Review ({count})"
+    "startReviewButtonText": "Starte Fast Review ({count})",
+    "leechCards": "Problemwörter",
+    "leechHint": "Wörter, die {count} Mal oder öfter vergessen wurden. Öffne eines und füge eine Zeichnung, ein Bild oder eine Aufnahme hinzu."
   },
   "srsProgress": {
     "title": "SRS-Details",
@@ -527,12 +537,12 @@
     "noDrawing": "No drawing saved for this word."
   },
   "filterDrawer": {
-    "title": "Filter Dictionary",
-    "close": "Close Filters",
+    "title": "Wörterbuch filtern",
+    "close": "Filter schließen",
     "status": "Status",
-    "srsStatus": "SRS Learning Status",
-    "otherTags": "Other Tags",
-    "reset": "Reset Filters"
+    "srsStatus": "SRS Lernstatus",
+    "otherTags": "Andere Tags",
+    "reset": "Filter zurücksetzen"
   },
   "handwritingCanvas": {
     "activate": "Activate",
@@ -602,5 +612,64 @@
     "installedDicts": "Installed Dictionary Versions",
     "dataAsOf": "Data as of:",
     "noDictsLoaded": "No dictionaries loaded."
+  },
+  "srsCard": {
+    "questionMissing": "Frage fehlt",
+    "answerMissing": "Antwort fehlt oder ungültige Fragekonfiguration."
+  },
+  "customMedia": {
+    "mediaSaved": "Medien gespeichert.",
+    "drawingSaved": "Zeichnung gespeichert.",
+    "drawingDeleted": "Zeichnung gelöscht.",
+    "imageSaved": "Bild gespeichert.",
+    "imageDeleted": "Bild gelöscht.",
+    "audioNoteSaved": "Audio-Notiz gespeichert.",
+    "audioNoteDeleted": "Audio-Notiz gelöscht.",
+    "textNoteSaved": "Textnotiz gespeichert.",
+    "textNoteDeleted": "Textnotiz gelöscht.",
+    "saveError": "Fehler beim Speichern der Medien: {error}",
+    "saveInProgress": "Ein anderer Speichervorgang läuft bereits."
+  },
+  "ankiExport": {
+    "noDictionary": "Kein Wörterbuch ausgewählt.",
+    "userNotLoaded": "Benutzerinformation nicht geladen.",
+    "gatherFailed": "Daten konnten nicht gesammelt werden.",
+    "noKeepWords": "Keine 'Keep' Wörter zum Exportieren gefunden.",
+    "downloadFailed": "Download fehlgeschlagen. Fehler: {error}"
+  },
+  "backup": {
+    "createError": "Fehler beim Erstellen des Backups: {error}",
+    "readingZip": "Lese ZIP-Datei...",
+    "missingManifest": "Die ZIP-Datei enthält keine 'manifest.json'. Ungültiges Backup.",
+    "invalidManifest": "Die 'manifest.json' hat ein ungültiges Format.",
+    "validated": "Backup validiert",
+    "validationError": "Fehler bei der Backup-Validierung: {error}",
+    "importingProgress": "Importiere Fortschritt...",
+    "importingSrs": "Importiere SRS-Daten...",
+    "importingMedia": "Importiere Medien ({done}/{total})",
+    "detailsProgress": "Wort-Status: {new} neu hinzugefügt, {updated} aktualisiert.",
+    "detailsSrs": "SRS-Einträge: {new} neu hinzugefügt, {updated} aktualisiert.",
+    "detailsMedia": "Medien: {count} neu hinzugefügt (existierende wurden nicht überschrieben).",
+    "detailsSkipped": "Übersprungen: {count} Einträge insgesamt (Wörterbücher nicht installiert).",
+    "importDone": "Import abgeschlossen!",
+    "importError": "Fehler beim Import: {error}",
+    "incompatibleVersion": "Inkompatible Backup-Version. Erwartet eine der folgenden: {expected}. Gefunden: {found}."
+  },
+  "audioDownload": {
+    "downloadStart": "Starte Audio-Download für {dict}...",
+    "downloadDoneWithErrors": "Audio-Download abgeschlossen. {errors} Zielsprachen-Audio(s) fehlten/nicht geladen.",
+    "downloadDone": "Audio-Download der Zielsprachen-Audio für {dict} abgeschlossen.",
+    "downloadAborted": "Audio-Download abgebrochen.",
+    "downloadFailed": "Audio-Download fehlgeschlagen: {error}"
+  },
+  "lookup": {
+    "title": "Schnell nachschlagen",
+    "placeholder": "Rumänisches oder deutsches Wort eingeben…",
+    "loadingIndex": "Wörterbuch wird geladen…",
+    "playAudio": "Aussprache abspielen",
+    "noResults": "Kein Eintrag für \"{term}\" gefunden.",
+    "searchDexonline": "Auf dexonline.ro suchen",
+    "searchWiktionary": "Auf Wiktionary suchen",
+    "hint": "Auch gebeugte Formen funktionieren — z. B. \"cainelui\" oder \"plecase\"."
   }
 }

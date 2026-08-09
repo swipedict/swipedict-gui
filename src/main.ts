@@ -8,7 +8,6 @@ import { useSettingsStore } from './stores/settingsStore'
 import App from './App.vue'
 import router from './router'
 import i18n, { setLocale, DEFAULT_LOCALE, SUPPORT_LOCALES } from './i18n'
-import { VueCookieNext } from 'vue-cookie-next'
 
 // --- APP INITIALIZATION ---
 
@@ -74,7 +73,6 @@ async function initializeApp() {
     // Now, use the other plugins and mount the app
     app.use(router);
     app.use(i18n);
-    app.use(VueCookieNext);
 
     app.mount('#app');
 }

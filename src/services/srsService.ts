@@ -1,11 +1,13 @@
-import { db, getSrsData, saveSrsData, type SrsData } from './db';
+import { db, getSrsData, saveSrsData, markCardAsIntroduced, type SrsData } from './db';
+import { srsUniqueId } from '@/types';
 import {
     MIN_EASE_FACTOR,
     INITIAL_EASE_FACTOR,
     LEARNING_STEPS_MINUTES,
     INITIAL_INTERVAL_DAYS,
     EASY_BONUS,
-    HARD_PENALTY
+    HARD_PENALTY,
+    LEECH_THRESHOLD
 } from './srsConstants';
 
 // --- Helper Functions ---
@@ -42,7 +44,7 @@ function calculateNextSrsState(currentData: SrsData, rating: 'again' | 'hard' | 
 
     // Ensure interval and easeFactor are numbers, providing defaults if necessary
     newData.interval = typeof newData.interval === 'number' ? newData.interval : 0;
-    newData.easeFactor = typeof newData.easeFactor === 'number' ? INITIAL_EASE_FACTOR : newData.easeFactor;
+    newData.easeFactor = typeof newData.easeFactor === 'number' ? newData.easeFactor : INITIAL_EASE_FACTOR;
     newData.lapses = typeof newData.lapses === 'number' ? newData.lapses : 0;
     newData.learningStep = typeof newData.learningStep === 'number' ? newData.learningStep : 0;
 
@@ -120,6 +122,12 @@ function calculateNextSrsState(currentData: SrsData, rating: 'again' | 'hard' | 
         return calculateNextSrsState(newData, rating); // Recalculate based on 'new' state
     }
 
+    // Flag leeches once, on the review that crosses the threshold. Callers detect the
+    // transition by comparing against the pre-review value, so the user is told exactly once.
+    if (!newData.isLeech && newData.lapses >= LEECH_THRESHOLD) {
+        newData.isLeech = true;
+    }
+
     // Round interval for storage/display if desired (e.g., to 2 decimal places)
     newData.interval = Math.round(newData.interval * 100) / 100;
 
@@ -134,7 +142,7 @@ function calculateNextSrsState(currentData: SrsData, rating: 'again' | 'hard' | 
  */
 export function createInitialSrsData(dictionaryPath: string, wordId: string): SrsData {
     const now = Date.now();
-    const uniqueId = `${dictionaryPath}_${wordId}`;
+    const uniqueId = srsUniqueId(dictionaryPath, wordId);
     return {
         uniqueId,
         dictionaryPath,
@@ -157,7 +165,7 @@ export function createInitialSrsData(dictionaryPath: string, wordId: string): Sr
  * @param rating User's rating for the card.
  */
 export async function answerCard(dictionaryPath: string, wordId: string, rating: 'again' | 'hard' | 'good' | 'easy'): Promise<SrsData> {
-    const uniqueId = `${dictionaryPath}_${wordId}`;
+    const uniqueId = srsUniqueId(dictionaryPath, wordId);
     let currentData = await getSrsData(uniqueId);
 
     if (!currentData) {
@@ -167,6 +175,12 @@ export async function answerCard(dictionaryPath: string, wordId: string, rating:
         currentData = createInitialSrsData(dictionaryPath, wordId);
         // Ensure it's due now if it was just created
         currentData.nextReviewDate = Date.now();
+    }
+
+    // First answer to a brand-new card: this is the moment it counts against the daily
+    // new-card quota — not when the session merely selected it (see getDueSrsCardsForSession).
+    if (currentData.state === 'new') {
+        await markCardAsIntroduced(uniqueId);
     }
 
     const updatedData = calculateNextSrsState(currentData, rating);

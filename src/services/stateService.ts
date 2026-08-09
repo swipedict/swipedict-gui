@@ -4,6 +4,7 @@ import { useDictionaryStore } from '@/stores/dictionaryStore';
 import { db } from '@/services/db';
 import type { StateExportManifest, WordMediaData, UserInfo, AppSettings, UserProgressMap, SrsData } from '@/types';
 import { dataUrlToBlob } from '@/utils/blobUtils';
+import i18n from '@/i18n';
 
 // ==================================================================
 // --- EXPORT LOGIC ---
@@ -109,7 +110,7 @@ export async function exportFullState(): Promise<{ success: boolean; message: st
 
     } catch (error: any) {
         console.error("Full State Export Error:", error);
-        return { success: false, message: `Fehler beim Erstellen des Backups: ${error.message}` };
+        return { success: false, message: i18n.global.t('backup.createError', { error: error.message }) };
     }
 }
 
@@ -137,7 +138,7 @@ function validateManifest(manifest: any): manifest is StateExportManifest {
     if (typeof manifest !== 'object' || manifest === null) return false;
     const validVersions = ["1.0-full-state", "1.1-versioned-state"];
     if (!validVersions.includes(manifest.exportFormatVersion)) {
-        throw new Error(`Inkompatible Backup-Version. Erwartet eine der folgenden: ${validVersions.join(', ')}. Gefunden: '${manifest.exportFormatVersion}'.`);
+        throw new Error(i18n.global.t('backup.incompatibleVersion', { expected: validVersions.join(', '), found: manifest.exportFormatVersion }));
     }
     return true;
 }
@@ -157,19 +158,19 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
     let manifest: StateExportManifest;
 
     try {
-        onProgress({ step: "Lese ZIP-Datei...", current: 0, total: 100 });
+        onProgress({ step: i18n.global.t('backup.readingZip'), current: 0, total: 100 });
         zip = await JSZip.loadAsync(zipFile);
         const manifestFile = zip.file("manifest.json");
-        if (!manifestFile) throw new Error("Die ZIP-Datei enthält keine 'manifest.json'. Ungültiges Backup.");
+        if (!manifestFile) throw new Error(i18n.global.t('backup.missingManifest'));
         
         const manifestContent = await manifestFile.async("string");
         const parsedManifest = JSON.parse(manifestContent);
-        if (!validateManifest(parsedManifest)) throw new Error("Die 'manifest.json' hat ein ungültiges Format.");
+        if (!validateManifest(parsedManifest)) throw new Error(i18n.global.t('backup.invalidManifest'));
         manifest = parsedManifest;
-        onProgress({ step: "Backup validiert", current: 10, total: 100 });
+        onProgress({ step: i18n.global.t('backup.validated'), current: 10, total: 100 });
     } catch (error: any) {
         console.error("Import Service: Pre-flight check failed.", error);
-        return { success: false, message: `Fehler bei der Backup-Validierung: ${error.message}` };
+        return { success: false, message: i18n.global.t('backup.validationError', { error: error.message }) };
     }
 
     try {
@@ -189,7 +190,7 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
 
         // 1. Smart Patch User Progress
         if (manifest.userProgress) {
-            onProgress({ step: "Importiere Fortschritt...", current: 20, total: 100 });
+            onProgress({ step: i18n.global.t('backup.importingProgress'), current: 20, total: 100 });
             for (const [dictPath, progressData] of Object.entries(manifest.userProgress)) {
                 if (currentDictionaryPaths.has(dictPath)) {
                     const existingProgress = await db.userProgress.get(dictPath) || { dictionaryPath: dictPath, progress: {} };
@@ -214,7 +215,7 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
 
         // 2. Smart Patch SRS Data
         if (manifest.srsData) {
-            onProgress({ step: "Importiere SRS-Daten...", current: 40, total: 100 });
+            onProgress({ step: i18n.global.t('backup.importingSrs'), current: 40, total: 100 });
             const srsToProcess = manifest.srsData.filter(srsItem => currentDictionaryPaths.has(srsItem.dictionaryPath));
             skippedSrs = manifest.srsData.length - srsToProcess.length;
             const existingSrsItems = await db.srsData.bulkGet(srsToProcess.map(i => i.uniqueId));
@@ -242,7 +243,7 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
             for (const mediaEntry of manifest.mediaManifest) {
                 processedMedia++;
                 const progressPercentage = 60 + Math.round((processedMedia / totalMedia) * 40);
-                onProgress({ step: `Importiere Medien (${processedMedia}/${totalMedia})`, current: progressPercentage, total: 100 });
+                onProgress({ step: i18n.global.t('backup.importingMedia', { done: processedMedia, total: totalMedia }), current: progressPercentage, total: 100 });
                 if (!currentDictionaryPaths.has(mediaEntry.dictionaryPath)) {
                     skippedMedia++;
                     continue;
@@ -291,20 +292,20 @@ export async function importStateFromZip(zipFile: File, onProgress: ImportProgre
             }
         }
 
-        let detailsMessage = `Wort-Status: ${importedProgressCount.new} neu hinzugefügt, ${importedProgressCount.updated} aktualisiert.`;
-        detailsMessage += `\nSRS-Einträge: ${importedSrsCount.new} neu hinzugefügt, ${importedSrsCount.updated} aktualisiert.`;
-        detailsMessage += `\nMedien: ${importedMediaCount} neu hinzugefügt (existierende wurden nicht überschrieben).`;
+        let detailsMessage = i18n.global.t('backup.detailsProgress', { new: importedProgressCount.new, updated: importedProgressCount.updated });
+        detailsMessage += '\n' + i18n.global.t('backup.detailsSrs', { new: importedSrsCount.new, updated: importedSrsCount.updated });
+        detailsMessage += '\n' + i18n.global.t('backup.detailsMedia', { count: importedMediaCount });
 
         if (skippedProgress > 0 || skippedSrs > 0 || skippedMedia > 0) {
-            detailsMessage += `\n\nÜbersprungen: ${skippedProgress + skippedSrs + skippedMedia} Einträge insgesamt (Wörterbücher nicht installiert).`;
+            detailsMessage += '\n\n' + i18n.global.t('backup.detailsSkipped', { count: skippedProgress + skippedSrs + skippedMedia });
         }
         
         await appStore.checkUserRegistration();
         await appStore.loadSettings();
 
-        return { success: true, message: "Import abgeschlossen!", details: detailsMessage };
+        return { success: true, message: i18n.global.t('backup.importDone'), details: detailsMessage };
     } catch (error: any) {
         console.error("Full State Import Error:", error);
-        return { success: false, message: `Fehler beim Import: ${error.message}` };
+        return { success: false, message: i18n.global.t('backup.importError', { error: error.message }) };
     }
 }

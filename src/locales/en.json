@@ -21,7 +21,8 @@
     "done": "Done",
     "search": "Search",
     "edit": "Edit",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "indexLoadError": "Could not load index: {error}"
   },
   "languages": {
     "de": "German",
@@ -92,7 +93,8 @@
     "selectDictionary": "Select Dictionary",
     "appVersion": "App Version",
     "userProfile": "{name}'s Profile | Profile",
-    "registerLogin": "Register / Login"
+    "registerLogin": "Register / Login",
+    "quickLookup": "Quick lookup"
   },
   "register": {
     "title": "Welcome!",
@@ -185,7 +187,7 @@
     "preferUserAudioDescription_on": "ON = Tapping a card in the list plays your recording (audio note) if available (before OGG/TTS).",
     "preferUserAudioDescription_off": "OFF = Always tries to play official pronunciation (OGG/TTS) (Default).",
     "disableTTSDescription_on": "ON = If OGG audio is missing/fails, Text-to-Speech is *not* attempted.",
-    "disableTTSDescription_off": "OFF = TTS is used as fallback (Default).",    
+    "disableTTSDescription_off": "OFF = TTS is used as fallback (Default).",
     "audioTitle": "Audio Playback",
     "playSoundLabel": "Play Sound on Tap (List)",
     "playSoundDescription": "ON = Tapping a card in the list plays audio for the target language (User recording/OGG/TTS).<br> OFF = No audio on tap.",
@@ -209,7 +211,9 @@
     "aiProviderDescription": "Choose a provider for image generation. You will need your own API key.",
     "apiKeyLabel": "{provider} API Key",
     "apiKeyPlaceholder": "Your {provider} API key",
-    "keyStoredLocally": "Your key is stored only locally in your browser."
+    "keyStoredLocally": "Your key is stored only locally in your browser.",
+    "settingsSaved": "Settings saved.",
+    "settingsSaveError": "Error saving settings: {error}"
   },
   "about": {
     "title": "About SwipeDict & Legal",
@@ -395,9 +399,10 @@
     "srsFastReview": {
       "title": "SRS Fast Review",
       "loadingStatus": "Loading status...",
-      "cardsDue": "{count} card due | {count} cards due",
+      "cardsDue": "Cards due",
       "noneDue": "No cards due!",
-      "wellDone": "Well done!"
+      "wellDone": "Well done!",
+      "checking": "Checking..."
     },
     "learningSummary": {
       "title": "To Learning Summary",
@@ -538,7 +543,10 @@
     "allSessionCardsDone": "All cards for this session completed! Well done!",
     "noCardsDueOrNew": "No cards currently due or scheduled as new for today.",
     "toTopicsLink": "To Topic Selection",
-    "toLearningSummary": "To Learning Summary"
+    "toLearningSummary": "To Learning Summary",
+    "leechDetected": "\"{word}\" keeps slipping — open it and add a drawing, image or recording to anchor it.",
+    "repeatSoon": "\"{word}\" will come up again shortly.",
+    "rateError": "Rating failed: {error}"
   },
   "learningSummary": {
     "pageTitle": "Learning Progress",
@@ -558,7 +566,9 @@
     "distributionTitle": "Card Distribution",
     "noDataForForecast": "No cards due in the next 7 days.",
     "noDataForDistribution": "No cards to analyze distribution.",
-    "startReviewButtonText": "Start Fast Review ({count})"
+    "startReviewButtonText": "Start Fast Review ({count})",
+    "leechCards": "Problem words",
+    "leechHint": "Words forgotten {count} or more times. Open one and add a drawing, image or recording to make it stick."
   },
   "srsProgress": {
     "title": "SRS Details",
@@ -602,5 +612,64 @@
     "clearSavedAudio": "Delete Saved Recording",
     "saveRecording": "Save Recording",
     "noNewRecording": "No new recording to save."
+  },
+  "srsCard": {
+    "questionMissing": "Question missing",
+    "answerMissing": "Answer missing or invalid question configuration."
+  },
+  "customMedia": {
+    "mediaSaved": "Media saved.",
+    "drawingSaved": "Drawing saved.",
+    "drawingDeleted": "Drawing deleted.",
+    "imageSaved": "Image saved.",
+    "imageDeleted": "Image deleted.",
+    "audioNoteSaved": "Audio note saved.",
+    "audioNoteDeleted": "Audio note deleted.",
+    "textNoteSaved": "Text note saved.",
+    "textNoteDeleted": "Text note deleted.",
+    "saveError": "Error saving media: {error}",
+    "saveInProgress": "Another save operation is already in progress."
+  },
+  "ankiExport": {
+    "noDictionary": "No dictionary selected.",
+    "userNotLoaded": "User information not loaded.",
+    "gatherFailed": "Could not gather export data.",
+    "noKeepWords": "No 'Keep' words found to export.",
+    "downloadFailed": "Download failed. Error: {error}"
+  },
+  "backup": {
+    "createError": "Error creating backup: {error}",
+    "readingZip": "Reading ZIP file...",
+    "missingManifest": "The ZIP file contains no 'manifest.json'. Invalid backup.",
+    "invalidManifest": "The 'manifest.json' has an invalid format.",
+    "validated": "Backup validated",
+    "validationError": "Backup validation error: {error}",
+    "importingProgress": "Importing word status...",
+    "importingSrs": "Importing SRS data...",
+    "importingMedia": "Importing media ({done}/{total})",
+    "detailsProgress": "Word status: {new} added, {updated} updated.",
+    "detailsSrs": "SRS entries: {new} added, {updated} updated.",
+    "detailsMedia": "Media: {count} added (existing entries were not overwritten).",
+    "detailsSkipped": "Skipped: {count} entries in total (dictionaries not installed).",
+    "importDone": "Import complete!",
+    "importError": "Import error: {error}",
+    "incompatibleVersion": "Incompatible backup version. Expected one of: {expected}. Found: {found}."
+  },
+  "audioDownload": {
+    "downloadStart": "Starting audio download for {dict}...",
+    "downloadDoneWithErrors": "Audio download finished. {errors} target-language audio file(s) were missing or failed.",
+    "downloadDone": "Target-language audio download for {dict} complete.",
+    "downloadAborted": "Audio download cancelled.",
+    "downloadFailed": "Audio download failed: {error}"
+  },
+  "lookup": {
+    "title": "Quick Lookup",
+    "placeholder": "Type a Romanian or German word…",
+    "loadingIndex": "Loading dictionary…",
+    "playAudio": "Play pronunciation",
+    "noResults": "No entry found for \"{term}\".",
+    "searchDexonline": "Search on dexonline.ro",
+    "searchWiktionary": "Search on Wiktionary",
+    "hint": "Inflected forms work too — try \"cainelui\" or \"plecase\"."
   }
 }

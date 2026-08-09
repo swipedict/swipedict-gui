@@ -4,6 +4,7 @@ import type {
     UserProgressMap, WordMediaData, UserInfo, AppSettings, CachedAppSettings,
     SrsData, ImageThumbnail, DictionaryIndexContent
 } from '@/types';
+import { srsUniqueId } from '@/types';
 import { clearAudioCache } from '@/composables/useAudioPlayer';
 
 export interface CachedDictionaryIndex {
@@ -151,26 +152,33 @@ export async function getDueSrsCardsForSession(dictionaryPath: string, now: numb
     const reviewAndLapsedCards = await db.srsData.where('dictionaryPath').equals(dictionaryPath).and(card => (card.state === 'review' || card.state === 'learning' || card.state === 'lapsed') && card.nextReviewDate <= now).sortBy('nextReviewDate');
     let cardsForSession = [...reviewAndLapsedCards];
     if (newCardLimit > 0) {
+        // Cards are marked "introduced" when first ANSWERED (see srsService.answerCard), not
+        // when merely selected here. Two consequences, both intended:
+        //  - an abandoned session costs nothing: unanswered new cards return next time;
+        //  - the limit is a true daily cap: today's already-answered new cards shrink the
+        //    remaining quota instead of every session handing out a fresh newCardLimit.
         const newCardsIntroducedToday = await getIntroducedTodayIds(dictionaryPath);
+        const remainingQuota = Math.max(0, newCardLimit - newCardsIntroducedToday.size);
         let newCardsAddedToSession = 0;
         const potentialNewCards = await db.srsData.where({ dictionaryPath: dictionaryPath, state: 'new' }).limit(newCardLimit * 2).toArray();
         for (const newCard of potentialNewCards) {
-            if (newCardsAddedToSession >= newCardLimit) break;
+            if (newCardsAddedToSession >= remainingQuota) break;
             if (!newCardsIntroducedToday.has(newCard.uniqueId)) {
                 cardsForSession.push(newCard);
                 newCardsAddedToSession++;
-                await markCardAsIntroduced(newCard.uniqueId);
             }
         }
     }
     return cardsForSession;
 }
 export async function getDueSrsCardsCount(dictionaryPath: string, now: number = Date.now()): Promise<number> { return await db.srsData.where('dictionaryPath').equals(dictionaryPath).and(card => card.nextReviewDate <= now).count(); }
-async function markCardAsIntroduced(uniqueId: string): Promise<void> { await db.introducedToday.put({ uniqueId, dateIntroduced: new Date().toISOString().split('T')[0] }); }
+/** Records that a new card was answered for the first time today. Idempotent (keyed put). */
+export async function markCardAsIntroduced(uniqueId: string): Promise<void> { await db.introducedToday.put({ uniqueId, dateIntroduced: new Date().toISOString().split('T')[0] }); }
 async function getIntroducedTodayIds(dictionaryPath: string): Promise<Set<string>> {
     const todayStr = new Date().toISOString().split('T')[0];
     const records = await db.introducedToday.where('dateIntroduced').equals(todayStr).toArray();
-    return new Set(records.filter(r => r.uniqueId.startsWith(`${dictionaryPath}_`)).map(r => r.uniqueId));
+    // srsUniqueId(path, '') yields the "<path>_" prefix every uniqueId of this dictionary shares.
+    return new Set(records.filter(r => r.uniqueId.startsWith(srsUniqueId(dictionaryPath, ''))).map(r => r.uniqueId));
 }
 export async function cleanupOldIntroducedCards(): Promise<void> {
     const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];

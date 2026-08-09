@@ -67,6 +67,31 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresDictionaryPathInParams: true },
     beforeEnter: [checkDictionaryContext]
   },
+  {
+    // Paramless entry point: resolves to the selected (or first) dictionary so the
+    // PWA share-target and bookmarks can use a stable /lookup?q=... URL.
+    path: '/lookup',
+    name: 'lookupBase',
+    beforeEnter: (to) => {
+        const appStoreInst = useAppStore();
+        const lastSelected = appStoreInst.selectedDictionaryPath;
+        const dictPath = (lastSelected && appStoreInst.availableDictionaries.some(d => d.path === lastSelected))
+            ? lastSelected
+            : appStoreInst.availableDictionaries[0]?.path;
+        if (!dictPath) return { name: 'dictionarySelection', replace: true };
+        return { name: 'lookup', params: { dictionaryPath: dictPath }, query: to.query, replace: true };
+    },
+    // Vue Router requires a component on leaf routes; the guard above always redirects.
+    component: () => import('@/views/LookupView.vue')
+  },
+  {
+    path: '/lookup/:dictionaryPath',
+    name: 'lookup',
+    component: () => import('@/views/LookupView.vue'),
+    props: true,
+    meta: { requiresDictionaryPathInParams: true },
+    beforeEnter: [checkDictionaryContext]
+  },
   // --- REFACTORED ROUTES ---
   {
     path: '/explore/:dictionaryPath/:topicId', 

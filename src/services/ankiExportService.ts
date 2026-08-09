@@ -4,6 +4,7 @@ import { useDictionaryStore } from '@/stores/dictionaryStore';
 import { getMediaForWord } from '@/services/db';
 import type { DictionaryMeta, UserInfo, WordMediaData, AnkiExportWord, AnkiExportPayload } from '@/types';
 import { dataUrlToBlob } from '@/utils/blobUtils';
+import i18n from '@/i18n';
 
 async function gatherAnkiExportData(): Promise<AnkiExportPayload | null> {
     const appStore = useAppStore();
@@ -12,7 +13,7 @@ async function gatherAnkiExportData(): Promise<AnkiExportPayload | null> {
     const user = appStore.currentUserInfo ?? { userName: 'unknown_user' };
 
     if (!selectedDict || !user.userName) {
-        const errorMsg = !selectedDict ? "Kein Wörterbuch ausgewählt." : "Benutzerinformation nicht geladen.";
+        const errorMsg = !selectedDict ? i18n.global.t('ankiExport.noDictionary') : i18n.global.t('ankiExport.userNotLoaded');
         console.error("Anki Export Error:", errorMsg);
         const defaultDict: DictionaryMeta = { dictId: 'unknown', author: '', message: 'Unknown', type: '', path: '', version: '', lastUpdate: 0 };
         return {
@@ -31,7 +32,7 @@ async function gatherAnkiExportData(): Promise<AnkiExportPayload | null> {
         await dictionaryStore.loadDictionaryIndex(dictionaryPath);
         if (dictionaryStore.dictionaryError) {
             console.error("Anki Export Error: Failed load dictionary index.", dictionaryStore.dictionaryError);
-             return { user, dictionary: selectedDict, words: [], mediaFiles: new Map(), error: `Konnte Index nicht laden: ${dictionaryStore.dictionaryError}` };
+             return { user, dictionary: selectedDict, words: [], mediaFiles: new Map(), error: i18n.global.t('general.indexLoadError', { error: dictionaryStore.dictionaryError }) };
         }
     }
 
@@ -245,7 +246,7 @@ function triggerDownload(blob: Blob, filename: string) {
         console.log(`Anki Export: Triggered download for ${filename}`);
     } catch (e) {
         console.error("Anki Export: Error triggering download:", e);
-        alert(`Download fehlgeschlagen. Fehler: ${e instanceof Error ? e.message : String(e)}`);
+        alert(i18n.global.t('ankiExport.downloadFailed', { error: e instanceof Error ? e.message : String(e) }));
     }
 }
 
@@ -254,13 +255,13 @@ export async function exportDataForAnki(): Promise<{ success: boolean; message: 
     try {
         const exportData = await gatherAnkiExportData();
         if (!exportData) {
-            throw new Error("Daten konnten nicht gesammelt werden.");
+            throw new Error(i18n.global.t('ankiExport.gatherFailed'));
         }
         if (exportData.error && exportData.words.length === 0) {
             throw new Error(exportData.error);
         }
         if (exportData.words.length === 0) {
-            return { success: true, message: "Keine 'Keep' Wörter zum Exportieren gefunden." };
+            return { success: true, message: i18n.global.t('ankiExport.noKeepWords') };
         }
         const { zipBlob, filename } = await generateAnkiZip(exportData);
         triggerDownload(zipBlob, filename);

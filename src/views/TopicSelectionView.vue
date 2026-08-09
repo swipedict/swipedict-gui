@@ -61,10 +61,10 @@
                         {{ $t('topicSelection.srsFastReview.title') }}
                     </h2>
                     
-                    <div v-if="isLoadingDueCount" class="text-xs text-slate-400 animate-pulse">Checking...</div>
+                    <div v-if="isLoadingDueCount" class="text-xs text-slate-400 animate-pulse">{{ $t('topicSelection.srsFastReview.checking') }}</div>
                     <div v-else-if="dueCardCount !== null && dueCardCount > 0">
                         <span class="text-3xl font-heading font-bold text-amber-600 dark:text-amber-400">{{ dueCardCount }}</span>
-                        <p class="text-xs font-medium text-amber-700 dark:text-amber-300 uppercase tracking-wide mt-1">Cards Due</p>
+                        <p class="text-xs font-medium text-amber-700 dark:text-amber-300 uppercase tracking-wide mt-1">{{ $t('topicSelection.srsFastReview.cardsDue') }}</p>
                     </div>
                     <div v-else>
                         <p class="text-sm font-medium text-slate-400 dark:text-slate-500">{{ $t('topicSelection.srsFastReview.noneDue') }}</p>
