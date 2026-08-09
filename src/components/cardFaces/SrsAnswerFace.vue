@@ -30,7 +30,7 @@
                  <p v-if="wordItem.source.pronunciation" class="text-sm text-gray-500 italic mt-1">{{ wordItem.source.pronunciation }}</p>
              </div>
              <!-- Fallback if data is missing -->
-             <div v-else class="italic text-gray-400">Antwort fehlt oder ungültige Fragekonfiguration.</div>
+             <div v-else class="italic text-gray-400">{{ $t('srsCard.answerMissing') }}</div>
         </div>
 
         <!-- Rating Buttons Area -->

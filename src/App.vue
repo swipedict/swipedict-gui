@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { RouterView, useRoute, RouterLink } from 'vue-router';
-import { VueCookieNext } from 'vue-cookie-next';
+import { hasCookie, setCookie } from '@/utils/cookieUtils';
 import { useI18n } from 'vue-i18n';
 import TopBar from '@/components/TopBar.vue';
 import emitter from '@/services/emitter';
@@ -114,8 +114,8 @@ async function performInitialSetup() {
     }
 }
 
-function checkConsent() { if (!VueCookieNext.isCookieAvailable(COOKIE_NAME)) { showConsentBanner.value = true; } else { showConsentBanner.value = false; } }
-function acceptConsent() { VueCookieNext.setCookie(COOKIE_NAME, 'true', { expire: '1y', path: '/', sameSite: 'Lax' }); showConsentBanner.value = false; }
+function checkConsent() { showConsentBanner.value = !hasCookie(COOKIE_NAME); }
+function acceptConsent() { setCookie(COOKIE_NAME, 'true', 365); showConsentBanner.value = false; }
 
 onMounted(async () => {
   checkConsent();
