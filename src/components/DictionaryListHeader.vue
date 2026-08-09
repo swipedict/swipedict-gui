@@ -68,21 +68,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PropType } from 'vue';
 import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, FunnelIcon, PlusIcon } from '@heroicons/vue/24/outline';
 
-const props = defineProps({
-    dictionaryTitle: { type: String, required: true },
-    dictionaryPath: { type: String, required: true },
-    searchTerm: { type: String, required: true },
-    totalFilteredCount: { type: Number, required: true },
-    renderedCount: { type: Number, required: true },
-    isLoadingSrs: { type: Boolean, default: false },
-    activeFilterCount: { type: Number, default: 0 },
-    displayMode: { type: String as PropType<'all' | 'sourceOnly' | 'targetOnly'>, required: true },
-    sourceLangCode: { type: String, required: true },
-    targetLangCode: { type: String, required: true },
-});
+const { dictionaryTitle, dictionaryPath, searchTerm, totalFilteredCount, renderedCount, isLoadingSrs = false, activeFilterCount = 0, displayMode, sourceLangCode, targetLangCode } = defineProps<{
+    dictionaryTitle: string;
+    dictionaryPath: string;
+    searchTerm: string;
+    totalFilteredCount: number;
+    renderedCount: number;
+    isLoadingSrs?: boolean;
+    activeFilterCount?: number;
+    displayMode: 'all' | 'sourceOnly' | 'targetOnly';
+    sourceLangCode: string;
+    targetLangCode: string;
+}>();
 
 const emit = defineEmits<{
     (e: 'update:searchTerm', value: string): void;
@@ -95,7 +94,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const localIsFilterBarVisible = ref(true);
 
-const searchPlaceholder = computed(() => t('dictionaryList.searchPlaceholder', { source: props.sourceLangCode, target: props.targetLangCode }));
+const searchPlaceholder = computed(() => t('dictionaryList.searchPlaceholder', { source: sourceLangCode, target: targetLangCode }));
 
 function toggleFilterBarVisibility() {
     if (!localIsFilterBarVisible.value) {

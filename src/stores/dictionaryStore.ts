@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick, watch } from 'vue';
-import type { Ref, ComputedRef } from 'vue';
 import type { IndexEntry, WordEntry, UserState, UserProgressMap, DictionaryIndexContent, DictionaryIndexFileMetadata, SrsData, CategorizedTags } from '@/types';
+import { srsUniqueId } from '@/types';
 import {
     getProgressForDictionary, saveProgressForDictionary,
     getSrsData, saveSrsData, deleteSrsData, db,
@@ -21,20 +21,20 @@ let currentLoadController: AbortController | null = null;
 export type SrsFilterMode = 'all' | 'in_srs' | 'not_in_srs';
 
 export const useDictionaryStore = defineStore('dictionary', () => {
-    const masterList: Ref<WordEntry[]> = ref([]);
-    const currentDictionaryPath: Ref<string | null> = ref(null);
-    const currentDictionaryMeta: Ref<DictionaryIndexFileMetadata | null> = ref(null);
-    const isLoadingIndex: Ref<boolean> = ref(false);
-    const dictionaryError: Ref<string | null> = ref(null);
-    const userProgress: Ref<UserProgressMap> = ref({});
-    const currentTopicId: Ref<string | null> = ref(null); 
-    const wordListFilterState: Ref<UserState> = ref('NONE');
-    
-    const srsWordIds: Ref<Set<string>> = ref(new Set()); 
-    const isLoadingSrsIds: Ref<boolean> = ref(false);
+    const masterList = ref<WordEntry[]>([]);
+    const currentDictionaryPath = ref<string | null>(null);
+    const currentDictionaryMeta = ref<DictionaryIndexFileMetadata | null>(null);
+    const isLoadingIndex = ref(false);
+    const dictionaryError = ref<string | null>(null);
+    const userProgress = ref<UserProgressMap>({});
+    const currentTopicId = ref<string | null>(null);
+    const wordListFilterState = ref<UserState>('NONE');
 
-    const renderedWordListCount: Ref<number> = ref(INITIAL_LOAD_COUNT);
-    const isLoadingMore: Ref<boolean> = ref(false);
+    const srsWordIds = ref<Set<string>>(new Set());
+    const isLoadingSrsIds = ref(false);
+
+    const renderedWordListCount = ref(INITIAL_LOAD_COUNT);
+    const isLoadingMore = ref(false);
     
     const availableCategorizedTags = computed((): CategorizedTags => {
         const categories = new Map<string, Set<string>>();
@@ -77,7 +77,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
         return Array.from(partsOfSpeech).sort();
     });
 
-    const getWordList: ComputedRef<WordEntry[]> = computed(() => {
+    const getWordList = computed<WordEntry[]>(() => {
         let list = masterList.value;
         const topicId = currentTopicId.value;
         const topicIdLower = topicId?.toLowerCase();
@@ -91,8 +91,8 @@ export const useDictionaryStore = defineStore('dictionary', () => {
         return list.filter(word => word.metadata.state === wordListFilterState.value);
     });
     
-    const getRenderedWordList: ComputedRef<WordEntry[]> = computed(() => getWordList.value.slice(0, renderedWordListCount.value));
-    const allWordListRendered: ComputedRef<boolean> = computed(() => getWordList.value.length > 0 && renderedWordListCount.value >= getWordList.value.length);
+    const getRenderedWordList = computed(() => getWordList.value.slice(0, renderedWordListCount.value));
+    const allWordListRendered = computed(() => getWordList.value.length > 0 && renderedWordListCount.value >= getWordList.value.length);
     
     const keepCount = computed(() => masterList.value.filter(w => w.metadata.state === 'KEEP').length);
     const ignoredCount = computed(() => masterList.value.filter(w => w.metadata.state === 'IGNORED').length);
@@ -275,13 +275,13 @@ export const useDictionaryStore = defineStore('dictionary', () => {
             await saveProgressForDictionary(dictionaryPath, progressToSave);
             userProgress.value = progressToSave; 
 
-            const srsUniqueId = `${dictionaryPath}_${id}`;
+            const uniqueId = srsUniqueId(dictionaryPath, id);
             if (newState === 'KEEP') {
-                let srsData = await getSrsData(srsUniqueId);
+                let srsData = await getSrsData(uniqueId);
                 if (!srsData) { srsData = srsService.createInitialSrsData(dictionaryPath, id); await saveSrsData(srsData); }
-                srsWordIds.value.add(id); 
+                srsWordIds.value.add(id);
             } else if (oldState === 'KEEP') {
-                await deleteSrsData(srsUniqueId);
+                await deleteSrsData(uniqueId);
                 srsWordIds.value.delete(id); 
             }
         } catch (error) {

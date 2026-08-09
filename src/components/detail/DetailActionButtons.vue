@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import type { PropType } from 'vue';
 import { ArrowPathIcon, NoSymbolIcon, CheckIcon, ArrowUturnLeftIcon } from '@heroicons/vue/20/solid';
 import type { UserState } from '@/types';
 import { useAppStore } from '@/stores/appStore';
@@ -46,16 +45,10 @@ import { useAppStore } from '@/stores/appStore';
 const { t } = useI18n();
 const appStore = useAppStore();
 
-defineProps({
-  currentState: {
-    type: String as PropType<UserState>,
-    required: true
-  },
-  isSavingState: {
-    type: Boolean,
-    default: false
-  }
-});
+const { currentState, isSavingState = false } = defineProps<{
+  currentState: UserState;
+  isSavingState?: boolean;
+}>();
 
 defineEmits<{
   (e: 'update-state', newState: UserState): void

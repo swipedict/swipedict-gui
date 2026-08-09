@@ -3,6 +3,7 @@ import type { Ref } from 'vue';
 import { speakText, cancelSpeech } from '@/services/tts';
 import { getLanguageCode } from '@/utils/languageUtils';
 import emitter from '@/services/emitter';
+import i18n from '@/i18n';
 import { MEDIA_BASE_URL } from '@/config';
 import { useAppStore } from '@/stores/appStore';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
@@ -259,11 +260,11 @@ export async function prefetchTargetAudio(dictionaryPath: string): Promise<void>
     activePrefetchController.value = new AbortController();
     const prefetchSignal = activePrefetchController.value.signal;
 
-    emitter.emit('show-notification', { message: `Starte Audio-Download für ${dictMeta.message}...`, type: 'success', duration: 2000 });
+    emitter.emit('show-notification', { message: i18n.global.t('audioDownload.downloadStart', { dict: dictMeta.message }), type: 'success', duration: 2000 });
     try {
         if (dictionaryStore.currentDictionaryPath !== dictionaryPath || dictionaryStore.masterList.length === 0) {
             await dictionaryStore.loadDictionaryIndex(dictionaryPath);
-            if (dictionaryStore.dictionaryError) throw new Error(`Index konnte nicht geladen werden: ${dictionaryStore.dictionaryError}`);
+            if (dictionaryStore.dictionaryError) throw new Error(i18n.global.t('general.indexLoadError', { error: dictionaryStore.dictionaryError }));
         }
         const words = dictionaryStore.masterList;
 
@@ -308,15 +309,15 @@ export async function prefetchTargetAudio(dictionaryPath: string): Promise<void>
             prefetchProgress.value = Math.round((completed / prefetchTotal.value) * 100);
         }
         if (errors > 0) {
-            emitter.emit('show-notification', { message: `Audio-Download abgeschlossen. ${errors} Zielsprachen-Audio(s) fehlten/nicht geladen.`, type: 'error', duration: 5000 });
+            emitter.emit('show-notification', { message: i18n.global.t('audioDownload.downloadDoneWithErrors', { errors }), type: 'error', duration: 5000 });
         } else {
-            emitter.emit('show-notification', { message: `Audio-Download der Zielsprachen-Audio für ${dictMeta.message} abgeschlossen.`, type: 'success', duration: 4000 });
+            emitter.emit('show-notification', { message: i18n.global.t('audioDownload.downloadDone', { dict: dictMeta.message }), type: 'success', duration: 4000 });
         }
     } catch (error: any) {
         if (error.message?.includes("aborted")) {
-            emitter.emit('show-notification', { message: "Audio-Download abgebrochen.", type: 'error' });
+            emitter.emit('show-notification', { message: i18n.global.t('audioDownload.downloadAborted'), type: 'error' });
         } else {
-            emitter.emit('show-notification', { message: `Audio-Download fehlgeschlagen: ${error.message}`, type: 'error' });
+            emitter.emit('show-notification', { message: i18n.global.t('audioDownload.downloadFailed', { error: error.message }), type: 'error' });
         }
     } finally {
         isPrefetching.value = false;

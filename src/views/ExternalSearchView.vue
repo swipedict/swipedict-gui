@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{
@@ -58,7 +58,7 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
-const iframeRef = ref<HTMLIFrameElement | null>(null);
+const iframeRef = useTemplateRef('iframeRef');
 
 // This ref will store the path of the route we came from.
 const previousRouteFullPath = ref('/welcome'); // Default fallback

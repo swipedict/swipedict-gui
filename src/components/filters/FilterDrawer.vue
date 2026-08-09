@@ -31,7 +31,7 @@
                 <div class="flex-grow overflow-y-auto p-4 space-y-5">
                     <!-- Status Filter -->
                     <div class="filter-group-drawer">
-                        <label class="filter-label-drawer">Status</label>
+                        <label class="filter-label-drawer">{{ $t('filterDrawer.status') }}</label>
                         <div class="filter-pill-group-drawer">
                             <button
                                 v-for="option in localStatusOptions" :key="option.value"
@@ -44,7 +44,7 @@
 
                     <!-- SRS Lernstatus Filter -->
                     <div class="filter-group-drawer">
-                        <label class="filter-label-drawer">SRS Lernstatus</label>
+                        <label class="filter-label-drawer">{{ $t('filterDrawer.srsStatus') }}</label>
                         <div class="filter-pill-group-drawer">
                             <button
                                 v-for="option in localSrsOptions" :key="option.value"
@@ -66,7 +66,7 @@
                     
                     <!-- Simple Tag Filter -->
                     <div v-if="availableCategorizedTags.simpleTags.size > 0" class="filter-group-drawer">
-                        <label for="drawer-simple-tag-filter" class="filter-label-drawer">Andere Tags</label>
+                        <label for="drawer-simple-tag-filter" class="filter-label-drawer">{{ $t('filterDrawer.otherTags') }}</label>
                         <select id="drawer-simple-tag-filter" v-model="tempFilters.simpleTag" class="filter-select-drawer">
                             <option :value="null">Alle</option>
                             <option v-for="tagItem in Array.from(availableCategorizedTags.simpleTags).sort()" :key="tagItem" :value="tagItem">{{ tagItem }}</option>
@@ -99,8 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive, onMounted, onUnmounted, computed } from 'vue';
-import type { PropType } from 'vue';
+import { watch, reactive, onMounted, onUnmounted, computed, useTemplateRef } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n';
 import type { UserState, SrsFilterMode, CategorizedTags } from '@/types';
@@ -112,20 +111,11 @@ type FilterValues = {
     categorized: Record<string, string>;
 };
 
-const props = defineProps({
-    isOpen: {
-        type: Boolean,
-        required: true,
-    },
-    currentFilters: {
-        type: Object as PropType<FilterValues>,
-        required: true,
-    },
-    availableCategorizedTags: {
-        type: Object as PropType<CategorizedTags>,
-        default: () => ({ categories: new Map(), simpleTags: new Set() }),
-    },
-});
+const { isOpen, currentFilters, availableCategorizedTags = { categories: new Map(), simpleTags: new Set() } } = defineProps<{
+    isOpen: boolean;
+    currentFilters: FilterValues;
+    availableCategorizedTags?: CategorizedTags;
+}>();
 
 const emit = defineEmits<{
     (e: 'close'): void;
@@ -134,14 +124,14 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const drawerPanel = ref<HTMLElement | null>(null);
+const drawerPanel = useTemplateRef('drawerPanel');
 
 // Temporary filters within the drawer
 const tempFilters = reactive<FilterValues>({
-    status: props.currentFilters.status,
-    srsMode: props.currentFilters.srsMode,
-    simpleTag: props.currentFilters.simpleTag,
-    categorized: { ...props.currentFilters.categorized },
+    status: currentFilters.status,
+    srsMode: currentFilters.srsMode,
+    simpleTag: currentFilters.simpleTag,
+    categorized: { ...currentFilters.categorized },
 });
 
 const localStatusOptions = computed(() => [
@@ -158,7 +148,7 @@ const localStatusOptions = computed(() => [
  ]);
 
 // Update temporary filters when props change (e.g., if parent clears filters)
-watch(() => props.currentFilters, (newFilters) => {
+watch(() => currentFilters, (newFilters) => {
     tempFilters.status = newFilters.status;
     tempFilters.srsMode = newFilters.srsMode;
     tempFilters.simpleTag = newFilters.simpleTag;
@@ -188,7 +178,7 @@ function clearAndClose() {
 
 // Handle Escape key to close
 const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && props.isOpen) {
+    if (event.key === 'Escape' && isOpen) {
         closeDrawer();
     }
 };

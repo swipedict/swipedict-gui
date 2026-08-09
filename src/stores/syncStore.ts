@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, reactive } from 'vue';
-import type { Ref } from 'vue';
 import i18n from '@/i18n';
 import { useAppStore } from './appStore';
 import { useSettingsStore } from './settingsStore';
@@ -14,7 +13,7 @@ import emitter from '@/services/emitter';
 export const useSyncStore = defineStore('sync', () => {
     const isSyncing = ref(false);
     const importStatus = reactive({ inProgress: false, completed: false, error: false, message: '', details: '', step: '', progress: 0 });
-    const remoteSyncVersion: Ref<number | 'loading' | 'error' | 'no_backup' | null> = ref(null);
+    const remoteSyncVersion = ref<number | 'loading' | 'error' | 'no_backup' | null>(null);
 
     function resetImportState() {
         importStatus.inProgress = false; importStatus.completed = false; importStatus.error = false;

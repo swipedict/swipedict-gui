@@ -62,6 +62,15 @@
                 {{ $t('learningSummary.totalActiveCards') }} <span class="font-bold">{{ summaryStats.totalActive }}</span>
             </div>
 
+            <!-- Leeches: words that keep being forgotten -->
+            <div v-if="summaryStats.leechCount > 0" class="bg-rose-50 border border-rose-200 p-3 sm:p-4 rounded-lg">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl sm:text-3xl font-bold text-rose-700">{{ summaryStats.leechCount }}</span>
+                    <span class="text-sm font-semibold text-rose-800">{{ $t('learningSummary.leechCards') }}</span>
+                </div>
+                <p class="text-xs text-rose-700/80 mt-1">{{ $t('learningSummary.leechHint', { count: LEECH_THRESHOLD }) }}</p>
+            </div>
+
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-4">
                 <!-- Forecast Chart -->
@@ -94,7 +103,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import type { Ref } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { useAppStore } from '@/stores/appStore';
 import { db } from '@/services/db';
@@ -102,7 +110,7 @@ import PageWrapper from '@/components/layout/PageWrapper.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import type { SrsData } from '@/types';
 import { useI18n } from 'vue-i18n';
-import { MATURE_INTERVAL_DAYS } from '@/services/srsConstants'; // <-- MODIFIED: Import constant
+import { MATURE_INTERVAL_DAYS, LEECH_THRESHOLD } from '@/services/srsConstants'; // <-- MODIFIED: Import constant
 
 import { Bar, Pie } from 'vue-chartjs';
 import {
@@ -112,7 +120,7 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement);
 
-interface SummaryStats { dueToday: number; dueTomorrow: number; newCount: number; learningCount: number; matureCount: number; totalActive: number; }
+interface SummaryStats { dueToday: number; dueTomorrow: number; newCount: number; learningCount: number; matureCount: number; totalActive: number; leechCount: number; }
 interface ChartData { labels: string[]; datasets: { label: string; backgroundColor: string | string[]; data: number[]; borderColor?: string | string[]; borderWidth?: number; }[]; }
 
 const { t } = useI18n();
@@ -124,10 +132,10 @@ const loadError = ref<string | null>(null);
 const currentDictionaryPath = ref(route.params.dictionaryPath as string || appStore.selectedDictionaryPath || '');
 const dictionaryTitle = computed(() => appStore.availableDictionaries.find(d => d.path === currentDictionaryPath.value)?.message || currentDictionaryPath.value);
 
-const allSrsDataForDict: Ref<SrsData[]> = ref([]);
-const summaryStats: Ref<SummaryStats> = ref({ dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0 });
-const forecastChartData: Ref<ChartData> = ref({ labels: [], datasets: [] });
-const distributionChartData: Ref<ChartData> = ref({ labels: [], datasets: [] });
+const allSrsDataForDict = ref<SrsData[]>([]);
+const summaryStats = ref<SummaryStats>({ dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0, leechCount: 0 });
+const forecastChartData = ref<ChartData>({ labels: [], datasets: [] });
+const distributionChartData = ref<ChartData>({ labels: [], datasets: [] });
 
 const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } };
 const pieChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' as const } } };
@@ -138,7 +146,7 @@ async function loadAllSrsStats() {
     allSrsDataForDict.value = [];
     forecastChartData.value = { labels: [], datasets: [] };
     distributionChartData.value = { labels: [], datasets: [] };
-    summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0 };
+    summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0, leechCount: 0 };
 
     const dictPath = currentDictionaryPath.value;
 
@@ -152,7 +160,7 @@ async function loadAllSrsStats() {
         if (allSrsDataForDict.value.length > 0) {
             processSrsData();
         } else {
-            summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0 };
+            summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0, leechCount: 0 };
         }
     } catch (error: any) {
         console.error("LearningSummaryView: Error loading SRS data:", error);
@@ -164,7 +172,7 @@ async function loadAllSrsStats() {
 
 function processSrsData() {
     if (!allSrsDataForDict.value || allSrsDataForDict.value.length === 0) {
-        summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0 };
+        summaryStats.value = { dueToday: 0, dueTomorrow: 0, newCount: 0, learningCount: 0, matureCount: 0, totalActive: 0, leechCount: 0 };
         forecastChartData.value = { labels: [], datasets: [] };
         distributionChartData.value = { labels: [], datasets: [] };
         return;
@@ -177,8 +185,9 @@ function processSrsData() {
     let dueToday = 0;
     let newC = 0;
     let learningOrLapsedC = 0; 
-    let youngC = 0;            
+    let youngC = 0;
     let matureC = 0;
+    let leechC = 0;
     
     const forecastCounts: number[] = Array(7).fill(0);
     const dayLabels: string[] = [];
@@ -201,6 +210,12 @@ function processSrsData() {
             }
         }
 
+        // Count leeches by the same rule the service applies, so cards that crossed the
+        // threshold before this feature existed are picked up too.
+        if (card.isLeech || card.lapses >= LEECH_THRESHOLD) {
+            leechC++;
+        }
+
         if (card.state === 'new') {
             newC++;
         } else if (card.state === 'learning' || card.state === 'lapsed') {
@@ -220,7 +235,8 @@ function processSrsData() {
         newCount: newC,
         learningCount: learningOrLapsedC, 
         matureCount: matureC,
-        totalActive: allSrsDataForDict.value.length 
+        totalActive: allSrsDataForDict.value.length,
+        leechCount: leechC
     };
 
     forecastChartData.value = {

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { AppSettings } from '@/types';
 import { getAppSettings, saveAppSettings } from '@/services/db';
-import { useI18n } from 'vue-i18n';
+import i18n from '@/i18n';
 import emitter from '@/services/emitter';
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -45,12 +45,10 @@ export const useSettingsStore = defineStore('settings', () => {
 
         try {
             await saveAppSettings(newSettings);
-            // We use the global i18n instance here via emitter or direct import if needed, 
-            // but for architectural purity, we just emit the success.
-            emitter.emit('show-notification', { message: "Einstellungen gespeichert.", type: 'success', duration: 1500 });
+            emitter.emit('show-notification', { message: i18n.global.t('userSettings.settingsSaved'), type: 'success', duration: 1500 });
         } catch (error: any) {
             settings.value = oldSettings; // Rollback
-            emitter.emit('show-notification', { message: `Fehler: ${error.message}`, type: 'error' });
+            emitter.emit('show-notification', { message: i18n.global.t('userSettings.settingsSaveError', { error: error.message }), type: 'error' });
         }
     }
 

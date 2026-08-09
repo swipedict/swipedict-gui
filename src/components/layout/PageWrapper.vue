@@ -63,15 +63,10 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
+const { size = 'lg', noPadX = false, noPadY = false, centered = true } = defineProps<{
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
   noPadX?: boolean;
   noPadY?: boolean;
   centered?: boolean;
-}>(), {
-  size: 'lg',
-  noPadX: false,
-  noPadY: false,
-  centered: true,
-});
+}>();
 </script>

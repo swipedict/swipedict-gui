@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Ref, ComputedRef } from 'vue';
+import type { ComputedRef } from 'vue';
 import type { DictionaryMeta, GlobalIndex, UserInfo } from '@/types';
 import {
     getCachedGlobalDicts, cacheGlobalDicts,
@@ -18,32 +18,32 @@ export const useAppStore = defineStore('app', () => {
     const settingsStore = useSettingsStore();
 
     // --- State ---
-    const availableDictionaries: Ref<DictionaryMeta[]> = ref([]);
-    const selectedDictionaryPath: Ref<string | null> = ref(null);
-    const isLoadingGlobalIndex: Ref<boolean> = ref(false);
-    const globalIndexLoaded: Ref<boolean> = ref(false);
-    const globalIndexServerInfo: Ref<string | null> = ref(null);
-    const globalIndexGeneratedAt: Ref<number | null> = ref(null);
-    const currentUserInfo: Ref<UserInfo | null> = ref(null);
-    const isLoadingUserInfo: Ref<boolean> = ref(false);
-    const checkedInitialUserStatus: Ref<boolean> = ref(false);
-    
-    const apiKeys: Ref<Record<string, string>> = ref({});
-    
-    const _lastFetchedRemoteIndex: Ref<GlobalIndex | null> = ref(null);
-    const isCheckingForUpdates: Ref<boolean> = ref(false);
-    const updateCheckError: Ref<string | null> = ref(null);
+    const availableDictionaries = ref<DictionaryMeta[]>([]);
+    const selectedDictionaryPath = ref<string | null>(null);
+    const isLoadingGlobalIndex = ref(false);
+    const globalIndexLoaded = ref(false);
+    const globalIndexServerInfo = ref<string | null>(null);
+    const globalIndexGeneratedAt = ref<number | null>(null);
+    const currentUserInfo = ref<UserInfo | null>(null);
+    const isLoadingUserInfo = ref(false);
+    const checkedInitialUserStatus = ref(false);
+
+    const apiKeys = ref<Record<string, string>>({});
+
+    const _lastFetchedRemoteIndex = ref<GlobalIndex | null>(null);
+    const isCheckingForUpdates = ref(false);
+    const updateCheckError = ref<string | null>(null);
 
     let _userInfoPromise: Promise<void> | null = null;
     let _globalIndexPromise: Promise<void> | null = null;
 
     // --- Computed Properties ---
 
-    const selectedDictionary: ComputedRef<DictionaryMeta | undefined> = computed(() =>
+    const selectedDictionary = computed(() =>
         availableDictionaries.value.find(dict => dict.path === selectedDictionaryPath.value)
     );
-    const isUserRegistered: ComputedRef<boolean> = computed(() => !!currentUserInfo.value?.userName);
-    const userName: ComputedRef<string | null> = computed(() => currentUserInfo.value?.userName || null);
+    const isUserRegistered = computed(() => !!currentUserInfo.value?.userName);
+    const userName = computed(() => currentUserInfo.value?.userName || null);
     
     
     const currentLocale: ComputedRef<string> = computed({
@@ -59,7 +59,7 @@ export const useAppStore = defineStore('app', () => {
         }
     });
 
-    const dictionariesWithUpdates: ComputedRef<DictionaryMeta[]> = computed(() => {
+    const dictionariesWithUpdates = computed<DictionaryMeta[]>(() => {
         if (!_lastFetchedRemoteIndex.value?.dictionaries) return [];
         const localMap = new Map(availableDictionaries.value.map(d => [d.path, d]));
         return _lastFetchedRemoteIndex.value.dictionaries.reduce((updates: DictionaryMeta[], remoteDict) => {

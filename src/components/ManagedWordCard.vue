@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, watch, nextTick, onMounted, provide } from 'vue';
-import type { PropType, Component } from 'vue';
+import type { Component } from 'vue';
 import InteractiveCardShell from '@/components/InteractiveCardShell.vue';
 import DefaultDisplayFace from '@/components/cardFaces/DefaultDisplayFace.vue';
 import SrsQuestionFace from '@/components/cardFaces/SrsQuestionFace.vue';

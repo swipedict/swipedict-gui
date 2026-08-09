@@ -4,15 +4,15 @@
     <slot name="header"></slot>
 
     <!-- SKELETON LOADER STATE -->
-    <div v-if="props.isLoadingInitial" class="flex-grow w-full overflow-hidden p-4">
+    <div v-if="isLoadingInitial" class="flex-grow w-full overflow-hidden p-4">
         <!-- Replicate the grid layout used by the real list -->
-        <ul :class="props.gridClassName">
-            <li v-for="n in skeletonCount" :key="n" class="word-list-item" :style="{ height: props.itemHeight }">
+        <ul :class="gridClassName">
+            <li v-for="n in skeletonCount" :key="n" class="word-list-item" :style="{ height: itemHeight }">
                 <CardSkeleton />
             </li>
         </ul>
         <div class="text-center text-slate-400 dark:text-slate-500 text-sm mt-4 animate-pulse">
-            {{ props.loadingText }}
+            {{ loadingText }}
         </div>
     </div>
 
@@ -22,39 +22,39 @@
       v-else
       ref="infiniteScrollRef"
       class="flex-grow w-full"
-      :items="props.listItems" 
-      :load-more="props.loadMoreFunction"
-      :is-loading-more="props.isLoadingMore"
+      :items="listItems" 
+      :load-more="loadMoreFunction"
+      :is-loading-more="isLoadingMore"
       :is-loading-initial="false" 
-      :all-loaded="props.allLoaded"
-      :loading-text="props.loadingText"
-      :end-of-list-text="props.endOfListText"
-      :empty-text="props.emptyListMessage"
-      :min-items-to-display-message="props.minItemsForEmptyMessage"
-      :target-item-id-to-scroll-to="props.targetItemIdToScrollTo"
+      :all-loaded="allLoaded"
+      :loading-text="loadingText"
+      :end-of-list-text="endOfListText"
+      :empty-text="emptyListMessage"
+      :min-items-to-display-message="minItemsForEmptyMessage"
+      :target-item-id-to-scroll-to="targetItemIdToScrollTo"
       :list-key-prefix="listKeyPrefixForScroll"
-      :debug="props.debugScroll"
+      :debug="debugScroll"
     >
       <template #items="{ items: currentRenderedBatch }">
         <TransitionGroup
           v-if="currentRenderedBatch.length > 0"
-          :name="props.enableListAnimation ? 'list' : 'list-no-anim'"
+          :name="enableListAnimation ? 'list' : 'list-no-anim'"
           tag="ul"
-          :class="props.gridClassName"
+          :class="gridClassName"
         >
           <li
             v-for="wordItemInList in currentRenderedBatch"
             :key="wordItemInList.id"
             :id="`${listKeyPrefixForScroll}-${wordItemInList.id}`"
             class="word-list-item"
-            :style="{ height: props.itemHeight }"
+            :style="{ height: itemHeight }"
           >
             <ManagedWordCard
               :ref="el => setManagedCardRef(wordItemInList.id, el as any)"
               :word-item="wordItemInList"
-              :srs-data="props.getSrsDataForItem ? props.getSrsDataForItem(wordItemInList.id) : undefined"
-              :face-behavior-config="props.faceBehaviorConfig"
-              :initial-face-type="props.initialFaceType"
+              :srs-data="getSrsDataForItem ? getSrsDataForItem(wordItemInList.id) : undefined"
+              :face-behavior-config="faceBehaviorConfig"
+              :initial-face-type="initialFaceType"
               @card-action="handleCardActionFromManagedCard"
               @request-hint="payload => handleHintRequestFromManagedCard(payload, wordItemInList.id)"
             />
@@ -63,10 +63,10 @@
       </template>
       <template #empty>
         <div
-          v-if="!props.isLoadingMore && props.listItems.length === 0 && props.allLoaded"
+          v-if="!isLoadingMore && listItems.length === 0 && allLoaded"
           class="text-center text-slate-400 dark:text-slate-500 py-10 px-4"
         >
-          <p>{{ props.emptyListMessage || $t('dictionaryList.noWordsInDict') }}</p>
+          <p>{{ emptyListMessage || $t('dictionaryList.noWordsInDict') }}</p>
           <slot name="empty-actions"></slot>
         </div>
       </template>
@@ -76,7 +76,6 @@
 
 <script setup lang="ts" generic="T extends WordEntry">
 import { ref, reactive, computed } from 'vue';
-import type { PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ManagedWordCard from '@/components/ManagedWordCard.vue';
 import InfiniteScroll from '@/components/InfiniteScroll.vue';
@@ -89,38 +88,45 @@ defineOptions({
   name: 'GenericWordListView'
 });
 
-const props = defineProps({
-  listItems: {
-    type: Array as PropType<T[]>,
-    required: true,
-  },
-  isLoadingInitial: { type: Boolean, default: false },
-  isLoadingMore: { type: Boolean, default: false },
-  allLoaded: { type: Boolean, default: false },
-  loadMoreFunction: {
-    type: Function as PropType<() => Promise<void> | void>,
-    required: true,
-  },
-  faceBehaviorConfig: {
-    type: Object as PropType<Record<string, { interactions: FaceInteractionConfig }>>,
-    required: true,
-  },
-  initialFaceType: { type: String, required: true },
-  listKeyPrefix: { type: String, required: true },
-  targetItemIdToScrollTo: { type: [String, Number] as PropType<string | number | null>, default: null },
-  emptyListMessage: { type: String, default: '' },
-  minItemsForEmptyMessage: { type: Number, default: 10 },
-  gridClassName: { type: String, default: 'dictionary-browser-card-grid' },
-  itemHeight: { type: String, default: '180px' },
-  enableListAnimation: { type: Boolean, default: true },
-  getSrsDataForItem: {
-    type: Function as PropType<(wordId: string) => SrsData | undefined>,
-    default: undefined,
-  },
-  loadingText: { type: String, default: 'Loading more...' },
-  endOfListText: { type: String, default: 'End of list.' },
-  debugScroll: { type: Boolean, default: false },
-});
+const {
+  listItems,
+  isLoadingInitial = false,
+  isLoadingMore = false,
+  allLoaded = false,
+  loadMoreFunction,
+  faceBehaviorConfig,
+  initialFaceType,
+  listKeyPrefix,
+  targetItemIdToScrollTo = null,
+  emptyListMessage = '',
+  minItemsForEmptyMessage = 10,
+  gridClassName = 'dictionary-browser-card-grid',
+  itemHeight = '180px',
+  enableListAnimation = true,
+  getSrsDataForItem = undefined,
+  loadingText = 'Loading more...',
+  endOfListText = 'End of list.',
+  debugScroll = false,
+} = defineProps<{
+  listItems: T[];
+  isLoadingInitial?: boolean;
+  isLoadingMore?: boolean;
+  allLoaded?: boolean;
+  loadMoreFunction: () => Promise<void> | void;
+  faceBehaviorConfig: Record<string, { interactions: FaceInteractionConfig }>;
+  initialFaceType: string;
+  listKeyPrefix: string;
+  targetItemIdToScrollTo?: string | number | null;
+  emptyListMessage?: string;
+  minItemsForEmptyMessage?: number;
+  gridClassName?: string;
+  itemHeight?: string;
+  enableListAnimation?: boolean;
+  getSrsDataForItem?: (wordId: string) => SrsData | undefined;
+  loadingText?: string;
+  endOfListText?: string;
+  debugScroll?: boolean;
+}>();
 
 const emit = defineEmits<{
   (e: 'card-action', payload: CardActionEventPayload): void;
@@ -132,7 +138,7 @@ const customMediaStore = useCustomMediaStore();
 const infiniteScrollRef = ref<InstanceType<typeof InfiniteScroll> | null>(null);
 const managedCardRefs = reactive<Record<string, InstanceType<typeof ManagedWordCard> | null>>({});
 
-const listKeyPrefixForScroll = computed(() => `${props.listKeyPrefix}-${Math.random().toString(36).substring(2,7)}`);
+const listKeyPrefixForScroll = computed(() => `${listKeyPrefix}-${Math.random().toString(36).substring(2,7)}`);
 
 // Calculate how many skeletons to show based on screen size (rough estimate)
 const skeletonCount = computed(() => {
@@ -156,7 +162,7 @@ async function handleHintRequestFromManagedCard(payload: CardHintRequestPayload,
   const cardRef = managedCardRefs[cardWordId];
   if (!cardRef) return;
 
-  const wordEntry = props.listItems.find(item => item.id === payload.wordId);
+  const wordEntry = listItems.find(item => item.id === payload.wordId);
   if (!wordEntry || !wordEntry.metadata.dictionaryPath) {
     console.error(`GenericWordListView: Could not find dictionaryPath for wordId ${payload.wordId}`);
     cardRef.setHintData(payload.hintType, null);

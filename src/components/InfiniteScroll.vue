@@ -35,87 +35,59 @@
 </template>
 
 <script setup lang="ts" generic="T extends { id: string | number }">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
-import type { PropType } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed, useTemplateRef } from 'vue';
 
-const props = defineProps({
-  items: {
-    type: Array as PropType<T[]>,
-    required: true,
-  },
-  loadMore: {
-    type: Function as PropType<() => Promise<void> | void>,
-    required: true,
-  },
-  isLoadingMore: { 
-    type: Boolean,
-    default: false,
-  },
-  isLoadingInitial: { 
-    type: Boolean,
-    default: false,
-  },
-  allLoaded: { 
-    type: Boolean,
-    default: false,
-  },
-  threshold: { 
-    type: Number,
-    default: 200,
-  },
-  useIntersectionObserver: {
-    type: Boolean,
-    default: true,
-  },
-  loadingText: {
-    type: String,
-    default: 'Loading more...',
-  },
-  endOfListText: {
-    type: String,
-    default: 'End of list.',
-  },
-  emptyText: { 
-    type: String,
-    default: 'No items to display.',
-  },
-  minItemsToDisplayMessage: { 
-      type: Number,
-      default: 10
-  },
-  targetItemIdToScrollTo: { 
-    type: [String, Number] as PropType<string | number | null>,
-    default: null,
-  },
-  listKeyPrefix: { 
-    type: String,
-    default: 'listItem',
-  },
-  debug: { 
-    type: Boolean,
-    default: false,
-  }
-});
+const {
+  items,
+  loadMore,
+  isLoadingMore = false,
+  isLoadingInitial = false,
+  allLoaded = false,
+  threshold = 200,
+  useIntersectionObserver = true,
+  loadingText = 'Loading more...',
+  endOfListText = 'End of list.',
+  emptyText = 'No items to display.',
+  minItemsToDisplayMessage = 10,
+  targetItemIdToScrollTo = null,
+  listKeyPrefix = 'listItem',
+  debug = false,
+} = defineProps<{
+  items: T[];
+  loadMore: () => Promise<void> | void;
+  isLoadingMore?: boolean;
+  isLoadingInitial?: boolean;
+  allLoaded?: boolean;
+  threshold?: number;
+  useIntersectionObserver?: boolean;
+  loadingText?: string;
+  endOfListText?: string;
+  emptyText?: string;
+  minItemsToDisplayMessage?: number;
+  targetItemIdToScrollTo?: string | number | null;
+  listKeyPrefix?: string;
+  debug?: boolean;
+}>();
 
 const uniqueId = Math.random().toString(36).substring(2, 9);
-const scrollContainerRef = ref<HTMLDivElement | null>(null);
-const observerTargetRef = ref<HTMLDivElement | null>(null);
+const scrollContainerRef = useTemplateRef('scrollContainerRef');
+const observerTargetRef = useTemplateRef('observerTargetRef');
 let observer: IntersectionObserver | null = null;
 
-const itemsToRender = computed(() => props.items);
+const itemsToRender = computed(() => items);
 const scrollAttemptedForCurrentTarget = ref(false);
 let scrollRetryCount = 0;
 const MAX_SCROLL_RETRIES = 10; 
 let currentScrollTargetId: string | number | null = null;
 
 function logDebug(message: string, ...args: any[]) {
-  if (props.debug) {
-    console.log(`[InfiniteScroll ${props.listKeyPrefix || uniqueId}] ${message}`, ...args);
+  if (debug) {
+    console.log(`[InfiniteScroll ${listKeyPrefix || uniqueId}] ${message}`, ...args);
   }
 }
 
 const attemptScrollToTarget = async () => {
-  const targetId = props.targetItemIdToScrollTo; 
+  const targetId = targetItemIdToScrollTo; 
   
   if (!targetId || (scrollAttemptedForCurrentTarget.value && currentScrollTargetId === targetId) || !scrollContainerRef.value) {
     if (targetId && scrollAttemptedForCurrentTarget.value && currentScrollTargetId === targetId) {
@@ -135,7 +107,7 @@ const attemptScrollToTarget = async () => {
 
   await nextTick(); 
 
-  const targetElementId = `${props.listKeyPrefix}-${targetId}`;
+  const targetElementId = `${listKeyPrefix}-${targetId}`;
   const targetElement = document.getElementById(targetElementId);
 
   if (targetElement && scrollContainerRef.value.contains(targetElement)) {
@@ -145,7 +117,7 @@ const attemptScrollToTarget = async () => {
     scrollRetryCount = 0; 
   } else {
     logDebug(`attemptScrollToTarget: Element ${targetElementId} NOT FOUND in DOM (or not child of scroll container).`);
-    if (scrollRetryCount < MAX_SCROLL_RETRIES && !props.allLoaded) {
+    if (scrollRetryCount < MAX_SCROLL_RETRIES && !allLoaded) {
       scrollRetryCount++;
       setTimeout(attemptScrollToTarget, 150);
     } else {
@@ -156,7 +128,7 @@ const attemptScrollToTarget = async () => {
   }
 };
 
-watch(() => props.targetItemIdToScrollTo, (newTargetId, oldTargetId) => {
+watch(() => targetItemIdToScrollTo, (newTargetId, oldTargetId) => {
   logDebug(`targetItemIdToScrollTo prop changed: From '${oldTargetId}' to '${newTargetId}'`);
   if (newTargetId) {
     if (newTargetId !== currentScrollTargetId) {
@@ -175,27 +147,27 @@ watch(() => props.targetItemIdToScrollTo, (newTargetId, oldTargetId) => {
 }, { immediate: true });
 
 watch(itemsToRender, () => {
-  if (props.targetItemIdToScrollTo && !scrollAttemptedForCurrentTarget.value) {
-    logDebug(`itemsToRender watcher: Items updated, re-attempting scroll to ${props.targetItemIdToScrollTo} if not yet successful.`);
+  if (targetItemIdToScrollTo && !scrollAttemptedForCurrentTarget.value) {
+    logDebug(`itemsToRender watcher: Items updated, re-attempting scroll to ${targetItemIdToScrollTo} if not yet successful.`);
     attemptScrollToTarget();
   }
 }, { deep: true });
 
 
 const handleScroll = () => {
-  if (props.useIntersectionObserver || !scrollContainerRef.value || props.isLoadingMore || props.allLoaded) {
+  if (useIntersectionObserver || !scrollContainerRef.value || isLoadingMore || allLoaded) {
     return;
   }
   const el = scrollContainerRef.value;
-  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < props.threshold;
+  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
   if (nearBottom) {
     logDebug("handleScroll: Near bottom, calling loadMore.");
-    props.loadMore();
+    loadMore();
   }
 };
 
 const setupIntersectionObserver = () => {
-  if (!props.useIntersectionObserver || !observerTargetRef.value || !scrollContainerRef.value) return;
+  if (!useIntersectionObserver || !observerTargetRef.value || !scrollContainerRef.value) return;
   disconnectObserver();
   logDebug("setupIntersectionObserver: Setting up new observer.");
 
@@ -206,9 +178,9 @@ const setupIntersectionObserver = () => {
   };
 
   observer = new IntersectionObserver((entries) => {
-    if (entries[0]?.isIntersecting && !props.isLoadingMore && !props.allLoaded) {
+    if (entries[0]?.isIntersecting && !isLoadingMore && !allLoaded) {
       logDebug("IntersectionObserver: Target intersecting, calling loadMore.");
-      props.loadMore();
+      loadMore();
     }
   }, options);
   observer.observe(observerTargetRef.value);
@@ -224,7 +196,7 @@ const disconnectObserver = () => {
 
 onMounted(() => {
   logDebug("Component mounted.");
-  if (props.useIntersectionObserver) {
+  if (useIntersectionObserver) {
     nextTick(setupIntersectionObserver);
   }
 });
@@ -238,9 +210,9 @@ onUnmounted(() => {
 // We watch for the initial loading to complete. When it does, we re-run the
 // observer setup to ensure it correctly registers the now-populated, scrollable container.
 watch(
-    () => props.isLoadingInitial,
+    () => isLoadingInitial,
     (isLoading, wasLoading) => {
-        if (wasLoading && !isLoading && props.useIntersectionObserver) {
+        if (wasLoading && !isLoading && useIntersectionObserver) {
             logDebug("Initial load finished. Re-initializing IntersectionObserver.");
             nextTick(setupIntersectionObserver);
         }
@@ -257,9 +229,9 @@ const scrollToTop = () => {
 defineExpose({
   scrollToTop,
   forceScrollAttempt: () => { 
-    if (props.targetItemIdToScrollTo) {
-      logDebug(`forceScrollAttempt: Manually re-triggering scroll attempt for ${props.targetItemIdToScrollTo}.`);
-      currentScrollTargetId = props.targetItemIdToScrollTo;
+    if (targetItemIdToScrollTo) {
+      logDebug(`forceScrollAttempt: Manually re-triggering scroll attempt for ${targetItemIdToScrollTo}.`);
+      currentScrollTargetId = targetItemIdToScrollTo;
       scrollAttemptedForCurrentTarget.value = false;
       scrollRetryCount = 0;
       attemptScrollToTarget();

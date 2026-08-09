@@ -90,22 +90,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Ref } from 'vue';
 import type { HandwritingCanvasInstance } from '@/types';
 
-const props = defineProps({
-    initialDrawingDataUrl: {
-        type: String,
-        default: null
-    }
-});
+const { initialDrawingDataUrl = null } = defineProps<{
+    initialDrawingDataUrl?: string | null;
+}>();
 
 const { t } = useI18n();
 
 const isEditingEnabled = ref(false); 
 const isTouchDisabled = ref(false);
-const canvasEl: Ref<HTMLCanvasElement | null> = ref(null);
-const ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
+const canvasEl = ref<HTMLCanvasElement | null>(null);
+const ctx = ref<CanvasRenderingContext2D | null>(null);
 const isDrawing = ref(false);
 const allowedPointerType = ref<'pen' | 'mouse' | 'touch' | null>(null);
 const color = ref('#000000');
@@ -190,8 +186,8 @@ function resizeCanvas() {
         updateContextStyle(context); 
         if (imageData && hasUnsavedChanges.value) { 
              context.putImageData(imageData, 0, 0); 
-        } else if (props.initialDrawingDataUrl && !hasUnsavedChanges.value) {
-            _loadDataUrlOntoCanvas(props.initialDrawingDataUrl, context, canvasEl.value);
+        } else if (initialDrawingDataUrl && !hasUnsavedChanges.value) {
+            _loadDataUrlOntoCanvas(initialDrawingDataUrl, context, canvasEl.value);
         } else {
             // Canvas remains clear if no initial data or it was cleared and no new changes
         }
@@ -316,8 +312,8 @@ function loadInitialDrawing() {
          const context = ctx.value;
          const canvas = canvasEl.value;
 
-         if (props.initialDrawingDataUrl && canvas && context) {
-            _loadDataUrlOntoCanvas(props.initialDrawingDataUrl, context, canvas);
+         if (initialDrawingDataUrl && canvas && context) {
+            _loadDataUrlOntoCanvas(initialDrawingDataUrl, context, canvas);
         } else if (context && canvas) { 
              _clearCanvasContext(context, canvas);
              hasUnsavedChanges.value = false;
@@ -327,7 +323,7 @@ function loadInitialDrawing() {
 
 function exportDrawing(): string {
     if (canvasEl.value && ctx.value) {
-        if (!hasUnsavedChanges.value && !props.initialDrawingDataUrl) {
+        if (!hasUnsavedChanges.value && !initialDrawingDataUrl) {
             if (canvasEl.value.width > 0 && canvasEl.value.height > 0) { // Check dimensions before getImageData
                 try {
                      const pixelBuffer = new Uint32Array(ctx.value.getImageData(0, 0, canvasEl.value.width, canvasEl.value.height).data.buffer);
@@ -369,7 +365,7 @@ onUnmounted(() => {
      }
 });
 
-watch(() => props.initialDrawingDataUrl, (newDataUrl, oldDataUrl) => {
+watch(() => initialDrawingDataUrl, (newDataUrl, oldDataUrl) => {
     if (newDataUrl !== oldDataUrl) {
         loadInitialDrawing();
     }

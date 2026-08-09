@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
@@ -61,7 +61,7 @@ const isLoadingPage = ref(true);
 const pageError = ref<string | null>(null);
 const isWordIdValid = ref(false);
 
-const detailViewPageRoot = ref<HTMLDivElement | null>(null);
+const detailViewPageRoot = useTemplateRef('detailViewPageRoot');
 
 const {
   handlePointerDown: handlePageSwipeStartInternal,

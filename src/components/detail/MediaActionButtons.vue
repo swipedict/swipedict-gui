@@ -33,9 +33,7 @@ interface Props {
   savingButtonText?: string;
 }
 
-withDefaults(defineProps<Props>(), {
-  clearable: true,
-});
+const { clearable = true } = defineProps<Props>();
 
 defineEmits(['save', 'clear']);
 </script>

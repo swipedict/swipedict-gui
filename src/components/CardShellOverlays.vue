@@ -91,12 +91,12 @@ import { BookOpenIcon, PencilSquareIcon, PhotoIcon, XCircleIcon, CheckCircleIcon
 import type { WordEntry } from '@/types'; 
 import { WordItemInjectionKey, IsInSrsInjectionKey } from '@/types/interactiveCard';
 
-const props = defineProps({
-  showDetailsIcon: { type: Boolean, default: true },
-  hasUserDrawing: { type: Boolean, default: false },
-  hasUserImage: { type: Boolean, default: false },
-  showActionButtons: { type: Boolean, default: false },
-});
+const { showDetailsIcon = true, hasUserDrawing = false, hasUserImage = false, showActionButtons = false } = defineProps<{
+  showDetailsIcon?: boolean;
+  hasUserDrawing?: boolean;
+  hasUserImage?: boolean;
+  showActionButtons?: boolean;
+}>();
 
 const { t } = useI18n();
 

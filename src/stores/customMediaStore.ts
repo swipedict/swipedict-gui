@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
-import type { Ref } from 'vue';
 import { getMediaForWord as getMediaFromDb, saveMediaForWord as saveMediaToDb } from '@/services/db';
 import type { WordMediaData } from '@/types';
 import emitter from '@/services/emitter';
+import i18n from '@/i18n';
 import { useThumbnailStore } from './thumbnailStore';
 
 interface MediaCacheEntry {
@@ -18,8 +18,8 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes for in-memory cache before re-fetc
 export const useCustomMediaStore = defineStore('customMedia', () => {
     const thumbnailStore = useThumbnailStore();
 
-    const mediaCache: Ref<Map<string, MediaCacheEntry>> = shallowRef(new Map());
-    const isSavingMediaGlobally: Ref<boolean> = ref(false); // Global saving flag
+    const mediaCache = shallowRef<Map<string, MediaCacheEntry>>(new Map());
+    const isSavingMediaGlobally = ref(false); // Global saving flag
 
     function getCacheKey(dictionaryPath: string, wordId: string): string {
         return `${dictionaryPath}_${wordId}`;
@@ -76,10 +76,10 @@ export const useCustomMediaStore = defineStore('customMedia', () => {
     ): Promise<{ success: boolean; message: string; updatedMedia?: Partial<Pick<WordMediaData, 'drawingDataUrl' | 'imageDataUrl' | 'userAudioDataUrl' | 'userTextNote'>> }> {
         if (isSavingMediaGlobally.value) {
              console.warn("CustomMediaStore: Save operation already in progress globally.");
-            return { success: false, message: "Ein anderer Speichervorgang läuft bereits." };
+            return { success: false, message: i18n.global.t('customMedia.saveInProgress') };
         }
         isSavingMediaGlobally.value = true;
-        let notificationMsg = "Medien gespeichert."; // Default success message
+        let notificationMsg = i18n.global.t('customMedia.mediaSaved'); // Default success message
         let success = false;
         const cacheKey = getCacheKey(dictionaryPath, wordId);
 
@@ -91,17 +91,18 @@ export const useCustomMediaStore = defineStore('customMedia', () => {
             }
 
             // Determine specific success message based on what was updated
+            const t = i18n.global.t;
             if (mediaUpdates.drawingDataUrl !== undefined) {
-                notificationMsg = mediaUpdates.drawingDataUrl ? "Zeichnung gespeichert." : "Zeichnung gelöscht.";
+                notificationMsg = mediaUpdates.drawingDataUrl ? t('customMedia.drawingSaved') : t('customMedia.drawingDeleted');
             } else if (mediaUpdates.imageDataUrl !== undefined) {
-                notificationMsg = mediaUpdates.imageDataUrl ? "Bild gespeichert." : "Bild gelöscht.";
+                notificationMsg = mediaUpdates.imageDataUrl ? t('customMedia.imageSaved') : t('customMedia.imageDeleted');
             } else if (mediaUpdates.userAudioDataUrl !== undefined) {
-                notificationMsg = mediaUpdates.userAudioDataUrl ? "Audio-Notiz gespeichert." : "Audio-Notiz gelöscht.";
+                notificationMsg = mediaUpdates.userAudioDataUrl ? t('customMedia.audioNoteSaved') : t('customMedia.audioNoteDeleted');
             } else if (mediaUpdates.userTextNote !== undefined) {
-                notificationMsg = mediaUpdates.userTextNote ? "Textnotiz gespeichert." : "Textnotiz gelöscht.";
+                notificationMsg = mediaUpdates.userTextNote ? t('customMedia.textNoteSaved') : t('customMedia.textNoteDeleted');
             } else {
                 // This case should ideally not happen if mediaUpdates is always specific.
-                notificationMsg = "Medien erfolgreich aktualisiert."; 
+                notificationMsg = t('customMedia.mediaSaved');
             }
 
             emitter.emit('show-notification', { message: notificationMsg, type: 'success', duration: 1500 });
@@ -124,7 +125,7 @@ export const useCustomMediaStore = defineStore('customMedia', () => {
 
         } catch (error: any) {
             console.error(`CustomMediaStore: Failed to save media for ${cacheKey}:`, error);
-            notificationMsg = `Fehler beim Speichern der Medien: ${error.message}`;
+            notificationMsg = i18n.global.t('customMedia.saveError', { error: error.message });
             emitter.emit('show-notification', { message: notificationMsg, type: 'error' });
             success = false;
             return { success, message: notificationMsg };

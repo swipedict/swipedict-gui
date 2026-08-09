@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PropType } from 'vue';
 import type { BaseFaceComponentProps } from '@/types/interactiveCard';
 // No specific actions emitted from here; interactions are handled by ManagedWordCard based on config.
 

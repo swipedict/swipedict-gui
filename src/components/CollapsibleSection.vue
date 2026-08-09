@@ -21,22 +21,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps({
-  title: {
-    type: String,
-    required: true
-  },
-  startOpen: {
-    type: Boolean,
-    default: false
-  },
-  headerClass: {
-    type: String,
-    default: ''
-  }
-})
+const { title, startOpen = false, headerClass = '' } = defineProps<{
+  title: string
+  startOpen?: boolean
+  headerClass?: string
+}>()
 
-const isOpen = ref(props.startOpen)
+const isOpen = ref(startOpen)
 // Generate a simple unique ID for aria-controls
 const uid = Math.random().toString(36).substring(2, 9);
 

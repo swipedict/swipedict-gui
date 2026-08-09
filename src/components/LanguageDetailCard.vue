@@ -77,41 +77,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { WordSideContent, GrammaticalGenus } from '@/types';
 import { SpeakerWaveIcon, CpuChipIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline';
 
 type AudioAvailability = 'opus' | 'tts' | 'none';
 
-const props = defineProps({
-    content: {
-      type: Object as PropType<WordSideContent | undefined>,
-      required: false
-    },
-    lang: {
-      type: String,
-      required: true
-    },
-    audioAvailability: {
-        type: String as PropType<AudioAvailability>,
-        required: true,
-        default: 'none'
-    },
-    etymologyAudioAvailability: {
-        type: String as PropType<AudioAvailability>,
-        required: false,
-        default: 'none'
-    },
-    sourceLanguage: {
-      type: String,
-      required: true
-    },
-    targetLanguage: {
-      type: String,
-      required: true
-    }
-});
+const { content, lang, audioAvailability = 'none', etymologyAudioAvailability = 'none', sourceLanguage, targetLanguage } = defineProps<{
+    content?: WordSideContent;
+    lang: string;
+    audioAvailability: AudioAvailability;
+    etymologyAudioAvailability?: AudioAvailability;
+    sourceLanguage: string;
+    targetLanguage: string;
+}>();
 
 const emit = defineEmits<{
     (e: 'playAudio', lang: string): void
@@ -122,14 +102,14 @@ const { t } = useI18n();
 const showSourceEtymology = ref(false);
 
 function toggleEtymology() { showSourceEtymology.value = !showSourceEtymology.value; }
-function handleHeadwordClick() { if (props.audioAvailability !== 'none') emit('playAudio', props.lang); }
-function handleIconClick() { emit('playAudio', props.lang); }
+function handleHeadwordClick() { if (audioAvailability !== 'none') emit('playAudio', lang); }
+function handleIconClick() { emit('playAudio', lang); }
 
 function getGenusAbbreviation(genus?: GrammaticalGenus): string { if (!genus) return ''; switch (genus?.toLowerCase()) { case 'masculine': return 'm'; case 'feminine': return 'f'; case 'neuter': return 'n'; default: return genus.substring(0,1).toLowerCase(); } }
 
 function genusHeadwordColor(genus: GrammaticalGenus | undefined, currentLang: string): string {
-    if (currentLang === props.targetLanguage) return 'text-green-700 dark:text-green-400';
-    if (currentLang === props.sourceLanguage) {
+    if (currentLang === targetLanguage) return 'text-green-700 dark:text-green-400';
+    if (currentLang === sourceLanguage) {
         switch (genus?.toLowerCase()) {
             case 'masculine': return 'text-blue-700 dark:text-blue-400';
             case 'feminine': return 'text-pink-600 dark:text-pink-400';

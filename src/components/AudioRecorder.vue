@@ -70,17 +70,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, useTemplateRef } from 'vue';
 import type { Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MicrophoneIcon, StopIcon, PlayCircleIcon, TrashIcon } from '@heroicons/vue/20/solid';
 import type { AudioRecorderInstance } from '@/types';
 import emitter from '@/services/emitter';
 
-const props = defineProps({
-  lang: { type: String, default: 'user' },
-  initialAudioDataUrl: { type: String, default: null }
-});
+const { lang = 'user', initialAudioDataUrl = null } = defineProps<{
+  lang?: string;
+  initialAudioDataUrl?: string | null;
+}>();
 
 const { t } = useI18n();
 const isRecording = ref(false);
@@ -90,7 +90,7 @@ const mediaStream = ref<MediaStream | null>(null);
 const audioChunks = ref<Blob[]>([]);
 const error = ref<string | null>(null);
 const permissionStatus = ref<PermissionState | null>(null);
-const audioPlayer = ref<HTMLAudioElement | null>(null);
+const audioPlayer = useTemplateRef('audioPlayer');
 const recordedBlob = ref<Blob | null>(null);
 const isLoadingInitialAudio = ref(false);
 const recordingStartTime = ref(0);
@@ -104,9 +104,9 @@ let sourceNode: MediaStreamAudioSourceNode | null = null;
 let volumeAnimationRequest: number | null = null;
 
 
-async function checkInitialPermission() { if (!navigator.mediaDevices || !navigator.permissions) { error.value = "Media devices or Permissions API not supported."; permissionStatus.value = 'denied'; return; } try { const r = await navigator.permissions.query({ name: 'microphone' as PermissionName }); permissionStatus.value = r.state; r.onchange = () => { permissionStatus.value = r.state; }; if (r.state === 'granted') { await setupMediaStream(); } } catch (err: any) { console.error(`AudioRecorder [${props.lang}]: Error checking microphone permission:`, err); error.value = `Permission check failed: ${err.message}`; permissionStatus.value = 'denied'; } }
-async function requestPermission() { error.value = null; if (!navigator.mediaDevices) { error.value = "Media devices API not supported."; permissionStatus.value = 'denied'; return; } try { await setupMediaStream(); permissionStatus.value = 'granted'; } catch (err: any) { console.error(`AudioRecorder [${props.lang}]: Error requesting microphone access:`, err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { error.value = "Microphone access denied by user."; permissionStatus.value = 'denied'; } else if (err.name === 'NotFoundError') { error.value = "No microphone found."; permissionStatus.value = 'denied'; } else { error.value = `Could not get microphone access: ${err.message}`; permissionStatus.value = 'denied'; } } }
-async function setupMediaStream() { if (!navigator.mediaDevices) return; if (mediaStream.value) return; console.log(`AudioRecorder [${props.lang}]: Setting up media stream...`); mediaStream.value = await navigator.mediaDevices.getUserMedia({ audio: true }); console.log(`AudioRecorder [${props.lang}]: Media stream acquired.`); }
+async function checkInitialPermission() { if (!navigator.mediaDevices || !navigator.permissions) { error.value = "Media devices or Permissions API not supported."; permissionStatus.value = 'denied'; return; } try { const r = await navigator.permissions.query({ name: 'microphone' as PermissionName }); permissionStatus.value = r.state; r.onchange = () => { permissionStatus.value = r.state; }; if (r.state === 'granted') { await setupMediaStream(); } } catch (err: any) { console.error(`AudioRecorder [${lang}]: Error checking microphone permission:`, err); error.value = `Permission check failed: ${err.message}`; permissionStatus.value = 'denied'; } }
+async function requestPermission() { error.value = null; if (!navigator.mediaDevices) { error.value = "Media devices API not supported."; permissionStatus.value = 'denied'; return; } try { await setupMediaStream(); permissionStatus.value = 'granted'; } catch (err: any) { console.error(`AudioRecorder [${lang}]: Error requesting microphone access:`, err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { error.value = "Microphone access denied by user."; permissionStatus.value = 'denied'; } else if (err.name === 'NotFoundError') { error.value = "No microphone found."; permissionStatus.value = 'denied'; } else { error.value = `Could not get microphone access: ${err.message}`; permissionStatus.value = 'denied'; } } }
+async function setupMediaStream() { if (!navigator.mediaDevices) return; if (mediaStream.value) return; console.log(`AudioRecorder [${lang}]: Setting up media stream...`); mediaStream.value = await navigator.mediaDevices.getUserMedia({ audio: true }); console.log(`AudioRecorder [${lang}]: Media stream acquired.`); }
 
 // --- MODIFICATION: Function to start volume analysis ---
 function startVolumeAnalysis() {
@@ -142,7 +142,7 @@ function stopVolumeAnalysis() {
 
 async function startRecording() {
     if (!mediaStream.value || mediaStream.value.getAudioTracks().every(t => t.readyState === 'ended')) {
-        console.log(`AudioRecorder [${props.lang}]: No active stream, requesting permission/setup...`);
+        console.log(`AudioRecorder [${lang}]: No active stream, requesting permission/setup...`);
         try { await requestPermission(); if (!mediaStream.value) { error.value = "Failed to acquire microphone stream."; return; } } catch (err) { return; }
     }
     if (permissionStatus.value !== 'granted') {
@@ -155,29 +155,29 @@ async function startRecording() {
     try {
         const o = getSupportedMimeTypeOptions();
         mediaRecorder.value = new MediaRecorder(mediaStream.value, o);
-        console.log(`AudioRecorder [${props.lang}]: Using mimeType: ${mediaRecorder.value.mimeType}`);
+        console.log(`AudioRecorder [${lang}]: Using mimeType: ${mediaRecorder.value.mimeType}`);
         audioChunks.value = [];
         mediaRecorder.value.ondataavailable = (e) => {
             if (e.data.size > 0) { audioChunks.value.push(e.data); }
         };
         mediaRecorder.value.onstop = () => {
-            console.log(`AudioRecorder [${props.lang}]: Recording stopped.`);
+            console.log(`AudioRecorder [${lang}]: Recording stopped.`);
             if (audioChunks.value.length === 0) {
-                console.warn(`AudioRecorder [${props.lang}]: No data recorded.`);
+                console.warn(`AudioRecorder [${lang}]: No data recorded.`);
                 recordedBlob.value = null;
             } else {
                 const recorderMimeType = mediaRecorder.value?.mimeType;
                 const finalMimeType = (recorderMimeType && recorderMimeType.startsWith('audio/')) ? recorderMimeType : 'audio/webm';
-                console.log(`AudioRecorder [${props.lang}]: Creating blob with final MIME type: ${finalMimeType}`);
+                console.log(`AudioRecorder [${lang}]: Creating blob with final MIME type: ${finalMimeType}`);
                 const b = new Blob(audioChunks.value, { type: finalMimeType });
                 recordedBlob.value = b;
                 playbackUrl.value = URL.createObjectURL(b);
-                console.log(`AudioRecorder [${props.lang}]: Playback URL created: ${playbackUrl.value}`);
+                console.log(`AudioRecorder [${lang}]: Playback URL created: ${playbackUrl.value}`);
             }
             isRecording.value = false;
         };
         mediaRecorder.value.onerror = (e: Event) => {
-            console.error(`AudioRecorder [${props.lang}]: MediaRecorder error:`, (e as any).error || e);
+            console.error(`AudioRecorder [${lang}]: MediaRecorder error:`, (e as any).error || e);
             error.value = `Recording error: ${(e as any).error?.message || 'Unknown recording error'}`;
             isRecording.value = false;
             clearPlayback();
@@ -186,9 +186,9 @@ async function startRecording() {
         isRecording.value = true;
         recordingStartTime.value = Date.now();
         startVolumeAnalysis(); // --- MODIFICATION: Start the VU meter ---
-        console.log(`AudioRecorder [${props.lang}]: Recording started.`);
+        console.log(`AudioRecorder [${lang}]: Recording started.`);
     } catch (err: any) {
-        console.error(`AudioRecorder [${props.lang}]: Error starting MediaRecorder:`, err);
+        console.error(`AudioRecorder [${lang}]: Error starting MediaRecorder:`, err);
         error.value = `Failed to start recording: ${err.message}`;
         isRecording.value = false;
         clearPlayback();
@@ -203,7 +203,7 @@ function stopRecording() {
     if (mediaRecorder.value && mediaRecorder.value.state === 'recording') {
         mediaRecorder.value.stop();
     } else if (isRecording.value) {
-        console.warn(`AudioRecorder [${props.lang}]: Inconsistent recording state during stop.`);
+        console.warn(`AudioRecorder [${lang}]: Inconsistent recording state during stop.`);
         isRecording.value = false;
     }
 }
@@ -238,9 +238,9 @@ function toggleRecording() {
     }
 }
 
-function playRecording() { if (audioPlayer.value && playbackUrl.value) { console.log(`AudioRecorder [${props.lang}]: Playing ${playbackUrl.value}`); audioPlayer.value.play().catch(err => { console.error(`AudioRecorder [${props.lang}]: Error playing audio:`, err); error.value = `Playback failed: ${err.message}`; }); } else { console.warn(`AudioRecorder [${props.lang}]: Playback called but no playbackUrl or audioPlayer.`); } }
-function clearPlayback() { if (playbackUrl.value && playbackUrl.value.startsWith('blob:')) { URL.revokeObjectURL(playbackUrl.value); console.log(`AudioRecorder [${props.lang}]: Revoked Blob URL: ${playbackUrl.value}`); } playbackUrl.value = null; recordedBlob.value = null; audioChunks.value = []; if (audioPlayer.value) { audioPlayer.value.pause(); audioPlayer.value.removeAttribute('src'); audioPlayer.value.load(); } }
-function clearRecordingInternal() { if (isRecording.value) { stopRecording(); } clearPlayback(); error.value = null; console.log(`AudioRecorder [${props.lang}]: Internal state cleared by button.`); }
+function playRecording() { if (audioPlayer.value && playbackUrl.value) { console.log(`AudioRecorder [${lang}]: Playing ${playbackUrl.value}`); audioPlayer.value.play().catch(err => { console.error(`AudioRecorder [${lang}]: Error playing audio:`, err); error.value = `Playback failed: ${err.message}`; }); } else { console.warn(`AudioRecorder [${lang}]: Playback called but no playbackUrl or audioPlayer.`); } }
+function clearPlayback() { if (playbackUrl.value && playbackUrl.value.startsWith('blob:')) { URL.revokeObjectURL(playbackUrl.value); console.log(`AudioRecorder [${lang}]: Revoked Blob URL: ${playbackUrl.value}`); } playbackUrl.value = null; recordedBlob.value = null; audioChunks.value = []; if (audioPlayer.value) { audioPlayer.value.pause(); audioPlayer.value.removeAttribute('src'); audioPlayer.value.load(); } }
+function clearRecordingInternal() { if (isRecording.value) { stopRecording(); } clearPlayback(); error.value = null; console.log(`AudioRecorder [${lang}]: Internal state cleared by button.`); }
 
 function getAudioDataUrl(): Promise<string | null> {
     return new Promise((resolve, reject) => {
@@ -254,34 +254,34 @@ function getAudioDataUrl(): Promise<string | null> {
             resolve(reader.result as string);
         };
         reader.onerror = (err) => {
-            console.error(`AudioRecorder [${props.lang}]: FileReader error converting blob:`, err);
+            console.error(`AudioRecorder [${lang}]: FileReader error converting blob:`, err);
             reject(new Error("Failed to convert audio blob to Data URL"));
         };
         reader.readAsDataURL(blobToConvert);
     });
 }
 
-function getSupportedMimeTypeOptions(): MediaRecorderOptions { const m = [ 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', ]; for (const t of m) { if (MediaRecorder.isTypeSupported(t)) { return { mimeType: t }; } } console.warn(`AudioRecorder [${props.lang}]: No preferred mimeType supported, using default.`); return {}; }
+function getSupportedMimeTypeOptions(): MediaRecorderOptions { const m = [ 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', ]; for (const t of m) { if (MediaRecorder.isTypeSupported(t)) { return { mimeType: t }; } } console.warn(`AudioRecorder [${lang}]: No preferred mimeType supported, using default.`); return {}; }
 
 onMounted(async () => {
     await checkInitialPermission();
-    if (props.initialAudioDataUrl) {
-        loadInitialDataUrl(props.initialAudioDataUrl);
+    if (initialAudioDataUrl) {
+        loadInitialDataUrl(initialAudioDataUrl);
     }
 });
-onUnmounted(() => { if (isRecording.value) { stopRecording(); } stopVolumeAnalysis(); mediaStream.value?.getTracks().forEach(track => track.stop()); mediaStream.value = null; clearPlayback(); console.log(`AudioRecorder [${props.lang}]: Unmounted, stream tracks stopped, playback cleared.`); });
+onUnmounted(() => { if (isRecording.value) { stopRecording(); } stopVolumeAnalysis(); mediaStream.value?.getTracks().forEach(track => track.stop()); mediaStream.value = null; clearPlayback(); console.log(`AudioRecorder [${lang}]: Unmounted, stream tracks stopped, playback cleared.`); });
 function loadInitialDataUrl(dataUrl: string | null) {
     clearPlayback();
     if (dataUrl) {
-        console.log(`AudioRecorder [${props.lang}]: Loading initial/updated audio data URL.`);
+        console.log(`AudioRecorder [${lang}]: Loading initial/updated audio data URL.`);
         isLoadingInitialAudio.value = true;
         playbackUrl.value = dataUrl;
         isLoadingInitialAudio.value = false;
     } else {
-        console.log(`AudioRecorder [${props.lang}]: Initial audio URL is null, clearing display.`);
+        console.log(`AudioRecorder [${lang}]: Initial audio URL is null, clearing display.`);
     }
 }
-watch(() => props.initialAudioDataUrl, (newUrl, oldUrl) => {
+watch(() => initialAudioDataUrl, (newUrl, oldUrl) => {
     if (newUrl !== oldUrl && !isRecording.value) {
         loadInitialDataUrl(newUrl);
     }

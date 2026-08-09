@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import type { PropType, ComputedRef } from 'vue';
+import type { ComputedRef } from 'vue';
 import { useSettingsStore } from '@/stores/settingsStore';
 import type { BaseFaceComponentProps } from '@/types/interactiveCard';
 import { WordItemInjectionKey } from '@/types/interactiveCard';

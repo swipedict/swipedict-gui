@@ -45,32 +45,16 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue';
 import type { Sense, WordDetail } from '@/types';
 import TextPairDisplay from '@/components/TextPairDisplay.vue';
 
 type VisibilityMode = 'all' | 'sourceOnly' | 'targetOnly';
 
-defineProps({
-  senses: {
-    type: Array as PropType<Sense[]>,
-    default: () => []
-  },
-  wordDetail: {
-    type: Object as PropType<WordDetail | null>,
-    required: true
-  },
-  wordId: {
-    type: String,
-    required: true
-  },
-  dictionaryPath: {
-    type: String,
-    required: true
-  },
-  visibilityControl: {
-    type: String as PropType<VisibilityMode>,
-    default: 'all'
-  }
-});
+const { senses = [], wordDetail, wordId, dictionaryPath, visibilityControl = 'all' } = defineProps<{
+  senses?: Sense[];
+  wordDetail: WordDetail | null;
+  wordId: string;
+  dictionaryPath: string;
+  visibilityControl?: VisibilityMode;
+}>();
 </script>

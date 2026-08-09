@@ -54,14 +54,11 @@ import { ChevronLeftIcon } from '@heroicons/vue/24/outline';
 import { RouterLink } from 'vue-router';
 import type { RouteLocationRaw } from 'vue-router';
 
-withDefaults(defineProps<{
+const { backLabel = 'Zurück', hideBack = false } = defineProps<{
   title: string;
   backTo?: RouteLocationRaw;
   backLabel?: string;
   backFn?: () => void;
   hideBack?: boolean;
-}>(), {
-  backLabel: 'Zurück',
-  hideBack: false,
-});
+}>();
 </script>

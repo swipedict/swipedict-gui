@@ -62,20 +62,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, useTemplateRef } from 'vue';
 import { useRouter, RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import type { SrsData } from '@/types';
+import { srsUniqueId } from '@/types';
 import { getSrsData as fetchSrsDataFromDb, saveSrsData } from '@/services/db';
 import * as srsService from '@/services/srsService';
 import emitter from '@/services/emitter';
 import { useSwipeInteraction } from '@/composables/useSwipeInteraction';
 
-const props = defineProps({
-  dictionaryPath: { type: String, required: true },
-  wordId: { type: String, required: true }
-});
+const props = defineProps<{
+  dictionaryPath: string;
+  wordId: string;
+}>();
 
 const router = useRouter();
 const { t } = useI18n();
@@ -85,7 +86,7 @@ const localIsLoadingSrsData = ref(true);
 const localError = ref<string | null>(null);
 const isResetting = ref(false);
 
-const srsDetailViewRootRef = ref<HTMLDivElement | null>(null);
+const srsDetailViewRootRef = useTemplateRef('srsDetailViewRootRef');
 
 // --- Swipe Logic ---
 const {
@@ -143,7 +144,7 @@ async function loadSrsDataForView() {
   localError.value = null;
   localSrsData.value = null;
   try {
-    const uniqueId = `${props.dictionaryPath}_${props.wordId}`;
+    const uniqueId = srsUniqueId(props.dictionaryPath, props.wordId);
     const data = await fetchSrsDataFromDb(uniqueId);
     localSrsData.value = data || null;
     if (!data) {

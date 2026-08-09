@@ -4,9 +4,9 @@
     class="interactive-card-shell w-full h-full bg-white rounded-lg shadow-lg touch-manipulation select-none flex flex-col justify-start overflow-hidden relative border-2"
     :class="[borderColorClass]"
     :style="{
-      cursor: currentSurfaceIsDragging ? 'grabbing' : (props.interactionsForActiveFace ? 'grab' : 'default'),
-      transform: props.enableVisualSwipeFeedback ? swipeTransformStyleFromHook : 'none',
-      transition: props.enableVisualSwipeFeedback ? swipeTransitionStyleFromHook : 'none'
+      cursor: currentSurfaceIsDragging ? 'grabbing' : (interactionsForActiveFace ? 'grab' : 'default'),
+      transform: enableVisualSwipeFeedback ? swipeTransformStyleFromHook : 'none',
+      transition: enableVisualSwipeFeedback ? swipeTransitionStyleFromHook : 'none'
     }"
     @pointerdown="onSurfacePointerDown"
     @contextmenu.prevent="handleContextMenu"
@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, inject } from 'vue';
-import type { PropType, ComputedRef } from 'vue';
+import { computed, watch, onMounted, inject, useTemplateRef } from 'vue';
+import type { ComputedRef } from 'vue';
 import { useSwipeInteraction } from '@/composables/useSwipeInteraction';
 import type { CardFaceConfig, FaceInteractionConfig, InteractionRequestPayload } from '@/types/interactiveCard';
 import { WordItemInjectionKey } from '@/types/interactiveCard';
@@ -36,15 +36,15 @@ import type { WordEntry, WordMediaData } from '@/types';
 import CardShellOverlays from './CardShellOverlays.vue';
 import { useCustomMediaStore } from '@/stores/customMediaStore';
 
-const props = defineProps({
-  cardId: { type: String, required: true },
-  activeFaceConfig: { type: Object as PropType<CardFaceConfig>, required: true },
-  interactionsForActiveFace: { type: Object as PropType<FaceInteractionConfig | null>, default: null },
-  enableVisualSwipeFeedback: { type: Boolean, default: false },
-  swipeThreshold: { type: Number, default: 80 },
-  swipeMaxRotation: { type: Number, default: 5 },
-  longPressDelay: { type: Number, default: 700 },
-});
+const { cardId, activeFaceConfig, interactionsForActiveFace = null, enableVisualSwipeFeedback = false, swipeThreshold = 80, swipeMaxRotation = 5, longPressDelay = 700 } = defineProps<{
+  cardId: string;
+  activeFaceConfig: CardFaceConfig;
+  interactionsForActiveFace?: FaceInteractionConfig | null;
+  enableVisualSwipeFeedback?: boolean;
+  swipeThreshold?: number;
+  swipeMaxRotation?: number;
+  longPressDelay?: number;
+}>();
 
 const emit = defineEmits<{
   (e: 'interaction-request', payload: InteractionRequestPayload): void;
@@ -57,11 +57,11 @@ if (!wordItem) {
 }
 // --- END INJECTED DATA ---
 
-const shellSurfaceEl = ref<HTMLDivElement | null>(null);
+const shellSurfaceEl = useTemplateRef('shellSurfaceEl');
 const customMediaStore = useCustomMediaStore();
 
 const hasUserDrawingData = computed(() => {
-    if (props.activeFaceConfig.faceType === FaceType.SRS_ANSWER) {
+    if (activeFaceConfig.faceType === FaceType.SRS_ANSWER) {
         return false;
     }
     if (wordItem.value.mediaData?.drawingDataUrl) {
@@ -74,7 +74,7 @@ const hasUserDrawingData = computed(() => {
 });
 
 const hasUserImageData = computed(() => {
-    if (props.activeFaceConfig.faceType === FaceType.SRS_ANSWER) {
+    if (activeFaceConfig.faceType === FaceType.SRS_ANSWER) {
         return false;
     }
     if (wordItem.value.mediaData?.imageDataUrl) {
@@ -87,9 +87,9 @@ const hasUserImageData = computed(() => {
 });
 
 const effectiveShowDetailsIcon = computed(() => {
-  const baseVisibility = !!props.interactionsForActiveFace;
+  const baseVisibility = !!interactionsForActiveFace;
   if (!baseVisibility) return false;
-  if (props.activeFaceConfig.faceType === FaceType.SRS_QUESTION) {
+  if (activeFaceConfig.faceType === FaceType.SRS_QUESTION) {
     return false;
   }
   return true;
@@ -98,8 +98,8 @@ const effectiveShowDetailsIcon = computed(() => {
 // New computed property to decide when to show the Keep/Ignore buttons
 const showActionButtons = computed(() => {
     // Only show for these specific face types, which are the main list views.
-    return props.activeFaceConfig.faceType === FaceType.WORD_LIST_DEFAULT ||
-           props.activeFaceConfig.faceType === FaceType.EXPLORE_DEFAULT;
+    return activeFaceConfig.faceType === FaceType.WORD_LIST_DEFAULT ||
+           activeFaceConfig.faceType === FaceType.EXPLORE_DEFAULT;
 });
 
 onMounted(() => {
@@ -135,16 +135,16 @@ const {
 } = useSwipeInteraction(
   shellSurfaceEl,
   {
-    threshold: props.swipeThreshold,
-    maxRotation: props.swipeMaxRotation,
-    longPressDelay: props.longPressDelay
+    threshold: swipeThreshold,
+    maxRotation: swipeMaxRotation,
+    longPressDelay: longPressDelay
   },
   (event, diffX) => { // onSwipeLeft
-    const action = props.interactionsForActiveFace?.swipeLeft;
+    const action = interactionsForActiveFace?.swipeLeft;
     if (action) {
       emit('interaction-request', {
-        cardId: props.cardId,
-        originatingFaceId: props.activeFaceConfig.id,
+        cardId: cardId,
+        originatingFaceId: activeFaceConfig.id,
         interactionType: 'swipe-left',
         actionName: action,
         diffX: diffX
@@ -152,11 +152,11 @@ const {
     }
   },
   (event, diffX) => { // onSwipeRight
-    const action = props.interactionsForActiveFace?.swipeRight;
+    const action = interactionsForActiveFace?.swipeRight;
     if (action) {
       emit('interaction-request', {
-        cardId: props.cardId,
-        originatingFaceId: props.activeFaceConfig.id,
+        cardId: cardId,
+        originatingFaceId: activeFaceConfig.id,
         interactionType: 'swipe-right',
         actionName: action,
         diffX: diffX
@@ -164,22 +164,22 @@ const {
     }
   },
   (event) => { // onClick
-    const action = props.interactionsForActiveFace?.tap;
+    const action = interactionsForActiveFace?.tap;
     if (action) {
       emit('interaction-request', {
-        cardId: props.cardId,
-        originatingFaceId: props.activeFaceConfig.id,
+        cardId: cardId,
+        originatingFaceId: activeFaceConfig.id,
         interactionType: 'tap',
         actionName: action,
       });
     }
   },
   (event) => { // onLongPress
-    const action = props.interactionsForActiveFace?.longPress || props.interactionsForActiveFace?.tap;
+    const action = interactionsForActiveFace?.longPress || interactionsForActiveFace?.tap;
     if (action) {
          emit('interaction-request', {
-            cardId: props.cardId,
-            originatingFaceId: props.activeFaceConfig.id,
+            cardId: cardId,
+            originatingFaceId: activeFaceConfig.id,
             interactionType: 'long-press',
             actionName: action,
         });
@@ -188,7 +188,7 @@ const {
 );
 
 function onSurfacePointerDown(event: PointerEvent) {
-  if (!props.interactionsForActiveFace) return;
+  if (!interactionsForActiveFace) return;
   const targetElement = event.target as HTMLElement;
   if (targetElement.closest('button, a, input, select, textarea, [data-interactive-slot-item="true"], .card-shell-overlays-container div[role="button"], .card-shell-overlays-container button')) {
       return;
@@ -198,11 +198,11 @@ function onSurfacePointerDown(event: PointerEvent) {
 
 function handleContextMenu(event: MouseEvent) {
   event.preventDefault();
-  const action = props.interactionsForActiveFace?.contextMenu || props.interactionsForActiveFace?.tap;
+  const action = interactionsForActiveFace?.contextMenu || interactionsForActiveFace?.tap;
   if (action) {
       emit('interaction-request', {
-        cardId: props.cardId,
-        originatingFaceId: props.activeFaceConfig.id,
+        cardId: cardId,
+        originatingFaceId: activeFaceConfig.id,
         interactionType: 'context-menu',
         actionName: action,
     });
@@ -233,14 +233,14 @@ function handleOverlayAction(payload: { type: string; details?: any }) {
   if (actionToEmit) {
     // FIX: Add a guard to ensure activeFaceConfig exists before using it.
     // This can happen during rapid state transitions or component teardown.
-    if (!props.activeFaceConfig) {
+    if (!activeFaceConfig) {
       console.warn("InteractiveCardShell: handleOverlayAction triggered but activeFaceConfig is not available. Aborting event emit.");
       return;
     }
     
     emit('interaction-request', {
-      cardId: props.cardId,
-      originatingFaceId: props.activeFaceConfig.id,
+      cardId: cardId,
+      originatingFaceId: activeFaceConfig.id,
       interactionType: 'tap', // Treat button clicks like taps for consistency
       actionName: actionToEmit,
     });

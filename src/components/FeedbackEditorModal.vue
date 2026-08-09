@@ -158,7 +158,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PropType } from 'vue';
 import type { WordDetail, CategorizedTags } from '@/types';
 import emitter from '@/services/emitter';
 import CollapsibleSection from '@/components/CollapsibleSection.vue';

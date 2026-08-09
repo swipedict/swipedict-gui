@@ -48,21 +48,21 @@
         </router-link>
 
         <!-- Divider — tablet+ only -->
-        <div v-if="props.selectedDictionary" class="hidden sm:block h-5 w-px bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+        <div v-if="selectedDictionary" class="hidden sm:block h-5 w-px bg-slate-200 dark:bg-slate-700 shrink-0"></div>
 
         <!-- Dictionary name — truncated on mobile, expanded on desktop -->
         <router-link
-          v-if="props.selectedDictionary"
+          v-if="selectedDictionary"
           :to="dictionaryLinkTarget"
           class="group min-w-0 flex items-center gap-1.5 overflow-hidden"
           :title="dictionaryLinkTitle"
         >
           <span class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
-            {{ props.selectedDictionary.message }}
+            {{ selectedDictionary.message }}
           </span>
           <!-- Type badge — desktop only -->
           <span class="hidden lg:inline-block text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 dark:bg-surface-800 px-1.5 py-0.5 rounded shrink-0">
-            {{ props.selectedDictionary.type }}
+            {{ selectedDictionary.type }}
           </span>
         </router-link>
         <router-link
@@ -76,6 +76,15 @@
 
       <!-- ── Right: Actions ── -->
       <div class="flex items-center gap-0.5 sm:gap-1 shrink-0 ml-2">
+        <RouterLink
+          v-if="selectedDictionary?.path"
+          :to="{ name: 'lookup', params: { dictionaryPath: selectedDictionary.path } }"
+          class="btn-icon"
+          :title="$t('topBar.quickLookup')"
+        >
+          <MagnifyingGlassIcon class="h-5 w-5" />
+        </RouterLink>
+
         <button @click="toggleDarkMode" class="btn-icon" :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'">
           <SunIcon  v-if="isDark"  class="h-5 w-5" />
           <MoonIcon v-else         class="h-5 w-5" />
@@ -103,23 +112,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PropType } from 'vue';
 import { RouterLink } from 'vue-router';
-import { UserIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/outline';
+import { UserIcon, SunIcon, MoonIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 import { useAppStore } from '@/stores/appStore';
 import type { DictionaryMeta } from '@/types';
 import { useTheme } from '@/composables/useTheme';
 
-const props = defineProps({
-    selectedDictionary: {
-      type: Object as PropType<DictionaryMeta | undefined>,
-      default: undefined
-    },
-    topicTitle: {
-      type: String as PropType<string | null>,
-      default: null
-    }
-});
+const { selectedDictionary = undefined, topicTitle = null } = defineProps<{
+    selectedDictionary?: DictionaryMeta;
+    topicTitle?: string | null;
+}>();
 
 const { t } = useI18n();
 const appStore = useAppStore();
@@ -133,16 +135,16 @@ const userInitials = computed(() => {
 const homeLinkTarget = computed(() => appStore.isUserRegistered ? { name: 'welcome' } : { name: 'root' });
 
 const dictionaryLinkTarget = computed(() => {
-    if (props.selectedDictionary?.path) {
-      return { name: 'dictionaryBrowser', params: { dictionaryPath: props.selectedDictionary.path } };
+    if (selectedDictionary?.path) {
+      return { name: 'dictionaryBrowser', params: { dictionaryPath: selectedDictionary.path } };
     } else {
       return { name: 'dictionarySelection' };
     }
 });
 
 const dictionaryLinkTitle = computed(() => {
- if (props.selectedDictionary) {
-   return t('topBar.searchDictionary', { dict: props.selectedDictionary.message });
+ if (selectedDictionary) {
+   return t('topBar.searchDictionary', { dict: selectedDictionary.message });
  } else {
    return t('topBar.selectDictionary');
  }

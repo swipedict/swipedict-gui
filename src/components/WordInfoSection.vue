@@ -13,7 +13,7 @@
             :source-lang-code="wordDetail?.sourceLanguage || 'src'"
             :target-lang-code="wordDetail?.targetLanguage || 'tgt'"
             :audio-identifier="`example-${wordId}-${index}`"
-            :audio-context="{ dictionaryPath: props.dictionaryPath, wordId: props.wordId }"
+            :audio-context="{ dictionaryPath: dictionaryPath, wordId: wordId }"
             :audio-manifest="wordDetail?.media?.audio || []"
             :audio-path-prefix="`examples.${index}`"
             layout="block"
@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PropType } from 'vue';
 import type { Example, LearningTip, RelatedAntonym, WordDetail } from '@/types';
 import { useI18n } from 'vue-i18n';
 import TextPairDisplay from './TextPairDisplay.vue';
@@ -51,18 +50,18 @@ import TextPairDisplay from './TextPairDisplay.vue';
 type InfoItem = Example | LearningTip | RelatedAntonym;
 type InfoType = 'example' | 'learningTip' | 'related' | 'antonym';
 
-const props = defineProps({
-  items: { type: Array as PropType<InfoItem[]>, default: () => [] },
-  type: { type: String as PropType<InfoType>, required: true },
-  wordId: { type: String, required: true },
-  dictionaryPath: { type: String, required: true },
-  wordDetail: { type: Object as PropType<WordDetail | null>, default: null }
-});
+const { items = [], type, wordId, dictionaryPath, wordDetail = null } = defineProps<{
+  items?: InfoItem[];
+  type: InfoType;
+  wordId: string;
+  dictionaryPath: string;
+  wordDetail?: WordDetail | null;
+}>();
 
 const { t } = useI18n();
 
 const typeLabel = computed(() => {
-    switch (props.type) {
+    switch (type) {
         case 'example': return 'examples';
         case 'learningTip': return 'learning tips';
         case 'related': return 'related words';
@@ -72,9 +71,9 @@ const typeLabel = computed(() => {
 });
 
 function itemHasContent(item: InfoItem): boolean {
-    if (props.type === 'example') { return !!(item as Example).sourceText || !!(item as Example).targetText; }
-    if (props.type === 'learningTip') { return !!(item as LearningTip).text; }
-    if (props.type === 'related' || props.type === 'antonym') { return !!(item as RelatedAntonym).sourceText || !!(item as RelatedAntonym).targetText; }
+    if (type === 'example') { return !!(item as Example).sourceText || !!(item as Example).targetText; }
+    if (type === 'learningTip') { return !!(item as LearningTip).text; }
+    if (type === 'related' || type === 'antonym') { return !!(item as RelatedAntonym).sourceText || !!(item as RelatedAntonym).targetText; }
     return false;
 }
 </script>

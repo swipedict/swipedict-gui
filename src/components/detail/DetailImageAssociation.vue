@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/stores/appStore';
 import { useCustomMediaStore } from '@/stores/customMediaStore';
@@ -81,7 +81,7 @@ const { t } = useI18n();
 const appStore = useAppStore();
 const customMediaStore = useCustomMediaStore();
 
-const fileInputRef = ref<HTMLInputElement | null>(null);
+const fileInputRef = useTemplateRef('fileInputRef');
 const pendingImageDataUrl = ref<string | null>(null); 
 const currentImageDataUrl = ref<string | null | undefined>(props.initialImageDataUrl); 
 const imageError = ref<string | null>(null);

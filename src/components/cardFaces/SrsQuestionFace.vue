@@ -27,7 +27,7 @@
             {{ wordItem.target.pronunciation }}
         </p>
     </div>
-      <div v-else class="italic text-gray-400">Frage fehlt</div>
+      <div v-else class="italic text-gray-400">{{ $t('srsCard.questionMissing') }}</div>
   </div>
 </template>
 

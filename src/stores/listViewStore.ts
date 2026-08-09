@@ -33,7 +33,13 @@ export const useListViewStore = defineStore('listView', () => {
         // Apply EXPLORE filters first if a topic is set
         if (exploreTopicId.value && exploreTopicId.value.toLowerCase() !== 'all') {
             const topicIdLower = exploreTopicId.value.toLowerCase();
-            list = list.filter(entry => entry.tags?.some(tag => tag.toLowerCase() === topicIdLower));
+            // TopicSelectionView synthesises a `pos:<part_of_speech>` topic id for the word-class
+            // group. That tag is never present in entry.tags, so it has to be matched against the
+            // field itself — same special case the categorized browse filter makes below.
+            const posValue = topicIdLower.startsWith('pos:') ? topicIdLower.slice(4) : null;
+            list = list.filter(entry => posValue !== null
+                ? entry.part_of_speech?.toLowerCase() === posValue
+                : entry.tags?.some(tag => tag.toLowerCase() === topicIdLower));
             list = list.filter(word => word.metadata.state === exploreFilterState.value);
             return list;
         }

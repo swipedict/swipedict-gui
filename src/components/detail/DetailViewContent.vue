@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, toRefs } from 'vue';
+import { ref, watch, computed, toRefs, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter, RouterLink } from 'vue-router';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
@@ -138,7 +138,7 @@ const dictionaryStore = useDictionaryStore();
 const appStore = useAppStore();
 const settingsStore = useSettingsStore();
 const customMediaStore = useCustomMediaStore();
-const detailViewRoot = ref<HTMLDivElement | null>(null);
+const detailViewRoot = useTemplateRef('detailViewRoot');
 
 const { dictionaryPath, wordId } = toRefs(props);
 const { 

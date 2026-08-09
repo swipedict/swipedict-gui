@@ -50,7 +50,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue';
-import type { Ref } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import GenericWordListView from '@/components/GenericWordListView.vue';
@@ -63,6 +62,7 @@ import { getDueSrsCardsForSession } from '@/services/db';
 import * as srsService from '@/services/srsService';
 import { playSoundForItem } from '@/composables/useWordAudio';
 import type { WordEntry, SrsRating, SrsData } from '@/types';
+import { srsUniqueId } from '@/types';
 import type { FaceInteractionConfig, CardActionEventPayload, CardHintRequestPayload, FaceTypeKey } from '@/types/interactiveCard';
 import emitter from '@/services/emitter';
 
@@ -85,8 +85,8 @@ const loadError = ref<string | null>(null);
 const currentDictionaryPath = ref(route.params.dictionaryPath as string || appStore.selectedDictionaryPath || '');
 const dictionaryTitle = computed(() => appStore.availableDictionaries.find(d => d.path === currentDictionaryPath.value)?.message || currentDictionaryPath.value);
 
-const allDueSrsItems: Ref<SrsCardDisplayItem[]> = ref([]);
-const displayedCardsSrs: Ref<SrsCardDisplayItem[]> = ref([]);
+const allDueSrsItems = ref<SrsCardDisplayItem[]>([]);
+const displayedCardsSrs = ref<SrsCardDisplayItem[]>([]);
 const srsWordEntriesForGenericList = computed(() => displayedCardsSrs.value.map(item => item.wordEntry));
 
 const initialCardCount = ref(0);
@@ -237,7 +237,7 @@ async function handleHintRequestFromManagedCard(payload: CardHintRequestPayload)
 }
 
 function srsUniqueIdFromWordId(wordId: string): string {
-    return `${currentDictionaryPath.value}_${wordId}`;
+    return srsUniqueId(currentDictionaryPath.value, wordId);
 }
 
 async function handleRateSrsCard(srsInfoToRate: SrsData, rating: SrsRating) {
@@ -251,7 +251,18 @@ async function handleRateSrsCard(srsInfoToRate: SrsData, rating: SrsRating) {
 
     try {
         const updatedSrsData = await srsService.answerCard(srsInfoToRate.dictionaryPath, srsInfoToRate.wordId, rating);
-        
+
+        // Tell the user once, on the review that tips the card over the leech threshold.
+        if (!srsInfoToRate.isLeech && updatedSrsData.isLeech) {
+            const headword = allDueSrsItems.value.find(i => i.srsInfo.uniqueId === cardUniqueId)
+                ?.wordEntry?.target?.headword ?? srsInfoToRate.wordId;
+            emitter.emit('show-notification', {
+                message: t('srsFastReview.leechDetected', { word: headword }),
+                type: 'info',
+                duration: 4000
+            });
+        }
+
         const itemIndexAll = allDueSrsItems.value.findIndex(c => c.srsInfo.uniqueId === cardUniqueId);
         if (itemIndexAll > -1) {
             allDueSrsItems.value[itemIndexAll].srsInfo = updatedSrsData;
@@ -260,7 +271,7 @@ async function handleRateSrsCard(srsInfoToRate: SrsData, rating: SrsRating) {
         const currentDisplayIndex = displayedCardsSrs.value.findIndex(c => c.srsInfo.uniqueId === cardUniqueId);
 
         if (rating === 'again') {
-            emitter.emit('show-notification', { message: `"${srsInfoToRate.wordId.split(/[-_]/).pop()}" wird bald wiederholt.`, type: 'success', duration: 1500 });
+            emitter.emit('show-notification', { message: t('srsFastReview.repeatSoon', { word: srsInfoToRate.wordId.split(/[-_]/).pop() }), type: 'success', duration: 1500 });
             if (currentDisplayIndex > -1) {
                 const cardToMove = displayedCardsSrs.value.splice(currentDisplayIndex, 1)[0];
                 cardToMove.srsInfo = updatedSrsData; 
@@ -278,7 +289,7 @@ async function handleRateSrsCard(srsInfoToRate: SrsData, rating: SrsRating) {
             }
         }
     } catch (e: any) {
-        emitter.emit('show-notification', { message: `Fehler beim Bewerten: ${e.message}`, type: 'error' });
+        emitter.emit('show-notification', { message: t('srsFastReview.rateError', { error: e.message }), type: 'error' });
         if (cardRef) cardRef.commandFaceChange(FaceType.SRS_ANSWER, 'face-flip-3d');
     }
 }
@@ -293,7 +304,7 @@ async function loadSessionData() {
     try {
         if (dictionaryStore.currentDictionaryPath !== dictPath || dictionaryStore.masterList.length === 0) {
             await dictionaryStore.loadDictionaryIndex(dictPath);
-            if (dictionaryStore.dictionaryError) throw new Error(`Index konnte nicht geladen werden: ${dictionaryStore.dictionaryError}`);
+            if (dictionaryStore.dictionaryError) throw new Error(t('general.indexLoadError', { error: dictionaryStore.dictionaryError }));
         }
         const now = Date.now();
         const newCardsTodaySetting = settingsStore.settings.newCardsPerDay;

@@ -16,28 +16,18 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PropType } from 'vue';
 
 type TagColor = 'gray' | 'blue';
 type TagIcon = 'language' | 'source' | 'none';
 
-const props = defineProps({
-  text: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String as PropType<TagColor>,
-    default: 'gray',
-  },
-  icon: {
-    type: String as PropType<TagIcon>,
-    default: 'none',
-  }
-});
+const { text, color = 'gray', icon = 'none' } = defineProps<{
+  text: string;
+  color?: TagColor;
+  icon?: TagIcon;
+}>();
 
 const colorClasses = computed(() => {
-  switch (props.color) {
+  switch (color) {
     case 'blue':
       return 'bg-blue-100 text-blue-800';
     case 'gray':

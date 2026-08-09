@@ -30,12 +30,12 @@
   import type { AudioRecorderInstance } from '@/types';
   import emitter from '@/services/emitter';
   
-  const props = defineProps({
-    languageLabel: { type: String, required: true },
-    headword: { type: String, required: true },
-    initialAudioUrl: { type: String, default: null },
-    isSaving: { type: Boolean, default: false }
-  });
+  const { languageLabel, headword, initialAudioUrl = null, isSaving = false } = defineProps<{
+    languageLabel: string;
+    headword: string;
+    initialAudioUrl?: string | null;
+    isSaving?: boolean;
+  }>();
   
   const emit = defineEmits<{
     (e: 'save-audio', dataUrl: string | null): void
@@ -47,7 +47,7 @@
   
   async function handleSave() {
     if (!recorderRef.value) {
-        console.error(`AudioPracticeSection (${props.languageLabel}): recorderRef not available.`);
+        console.error(`AudioPracticeSection (${languageLabel}): recorderRef not available.`);
         return;
     }
     try {
@@ -58,7 +58,7 @@
         emitter.emit('show-notification', { message: t('audioPractice.noNewRecording'), type: 'error', duration: 2000 });
       }
     } catch (error: any) {
-      console.error(`Error getting audio data URL for ${props.languageLabel}:`, error);
+      console.error(`Error getting audio data URL for ${languageLabel}:`, error);
       emitter.emit('show-notification', { message: `Fehler beim Abrufen der Aufnahme: ${error.message}`, type: 'error' });
     }
   }
