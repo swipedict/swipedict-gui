@@ -359,6 +359,14 @@ onActivated(async () => {
     // If dictionary has changed, reload data
     if (dictionaryStore.currentDictionaryPath !== props.dictionaryPath) {
         await loadInitialData(true);
+    } else if (isExploreMode.value) {
+        // A word triaged while we were away — kept or ignored from the detail view —
+        // must not still be sitting in the list when we come back. Prune in place
+        // rather than rebuilding from getFilteredList so that a shuffled order and
+        // the scroll position both survive the round trip.
+        localDisplayList.value = localDisplayList.value.filter(
+            word => word.metadata.state === listViewStore.exploreFilterState
+        );
     }
     
     await nextTick();

@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full flex flex-col items-center overflow-hidden relative">
+  <div ref="rootRef" class="w-full h-full flex flex-col items-center overflow-hidden relative">
     <!-- Slot for custom header/filter controls provided by the parent -->
     <slot name="header"></slot>
 
@@ -46,7 +46,9 @@
             v-for="wordItemInList in currentRenderedBatch"
             :key="wordItemInList.id"
             :id="`${listKeyPrefixForScroll}-${wordItemInList.id}`"
+            :data-word-id="wordItemInList.id"
             class="word-list-item"
+            :class="{ 'kbd-focused': keyboardFocusedId === wordItemInList.id }"
             :style="{ height: itemHeight }"
           >
             <ManagedWordCard
@@ -75,7 +77,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends WordEntry">
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ManagedWordCard from '@/components/ManagedWordCard.vue';
 import InfiniteScroll from '@/components/InfiniteScroll.vue';
@@ -182,6 +184,88 @@ function scrollToTop() {
   infiniteScrollRef.value?.scrollToTop();
 }
 
+// --- KEYBOARD / HID CONTROLLER NAVIGATION -----------------------------------
+// A Bluetooth remote or a Zeemote behind a keyboard adapter shows up as a plain
+// keyboard, so driving the list with keys is all that is needed to support one.
+// Arrows and PageUp/PageDown move a roving highlight; Enter/Space and
+// Backspace/Delete fire the same actions the right/left swipes do, resolved from
+// faceBehaviorConfig so the two input methods can never drift apart.
+const keyboardFocusedId = ref<string | null>(null);
+
+// Read the order straight off the rendered elements rather than from the props.
+// InfiniteScroll owns how much of listItems is mounted, and props here are
+// destructured, so any script-side copy can disagree with what is on screen —
+// and acting on a stale index would mark the wrong word. data-word-id is used
+// rather than the element id because listKeyPrefixForScroll embeds a
+// Math.random() suffix that changes whenever that computed re-evaluates.
+const rootRef = ref<HTMLElement | null>(null);
+
+function navigableEls(): HTMLLIElement[] {
+  const scope: ParentNode = rootRef.value ?? document;
+  return Array.from(scope.querySelectorAll<HTMLLIElement>('li.word-list-item[data-word-id]'));
+}
+
+function navigableIds(): string[] {
+  return navigableEls().map(li => li.dataset.wordId!);
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el || !el.tagName) return false;
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable;
+}
+
+function moveKeyboardFocus(delta: number) {
+  const ids = navigableIds();
+  if (!ids.length) return;
+  const current = keyboardFocusedId.value ? ids.indexOf(keyboardFocusedId.value) : -1;
+  const next = current < 0 ? 0 : Math.min(ids.length - 1, Math.max(0, current + delta));
+  keyboardFocusedId.value = ids[next];
+
+  navigableEls()[next]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+  // Keep the runway ahead of the cursor so holding a direction does not dead-end.
+  if (next >= ids.length - 3 && !allLoaded && !isLoadingMore) loadMoreFunction();
+}
+
+function fireSwipeAction(interaction: 'swipeLeft' | 'swipeRight') {
+  const wordId = keyboardFocusedId.value;
+  if (!wordId) return;
+  const action = faceBehaviorConfig?.[initialFaceType]?.interactions?.[interaction];
+  if (!action) return;
+
+  // Acting on a card usually drops it from the list, which would strand the
+  // highlight. Claim the follower up front so the cursor lands there and the
+  // next press keeps working without re-navigating.
+  const ids = navigableIds();
+  const successor = ids[ids.indexOf(wordId) + 1] ?? ids[ids.indexOf(wordId) - 1] ?? null;
+
+  emit('card-action', { action, wordId, interactionType: interaction as any });
+  keyboardFocusedId.value = successor;
+}
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey) return;
+  if (isTypingTarget(e.target)) return;
+  // Let an open drawer or modal keep the keyboard to itself.
+  if (document.querySelector('[role="dialog"]')) return;
+
+  switch (e.key) {
+    case 'ArrowRight': case 'ArrowDown': case 'PageDown': moveKeyboardFocus(1); break;
+    case 'ArrowLeft': case 'ArrowUp': case 'PageUp': moveKeyboardFocus(-1); break;
+    case 'Enter': case ' ': fireSwipeAction('swipeRight'); break;
+    case 'Backspace': case 'Delete': fireSwipeAction('swipeLeft'); break;
+    // Escape clears the highlight but is deliberately not consumed — other
+    // components still need it to close themselves.
+    case 'Escape': keyboardFocusedId.value = null; return;
+    default: return;
+  }
+  e.preventDefault();
+}
+
+onMounted(() => document.addEventListener('keydown', handleGlobalKeydown));
+onBeforeUnmount(() => document.removeEventListener('keydown', handleGlobalKeydown));
+
 defineExpose({
   scrollToTop,
   getManagedCardRef: (id: string) => managedCardRefs[id],
@@ -192,5 +276,16 @@ defineExpose({
 <style scoped>
 .word-list-item {
   position: relative;
+}
+
+/* Roving highlight for keyboard / HID-controller navigation. */
+.word-list-item.kbd-focused::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 0.85rem;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px theme('colors.primary.500', #6366f1);
+  z-index: 5;
 }
 </style>

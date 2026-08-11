@@ -31,15 +31,22 @@ export const useListViewStore = defineStore('listView', () => {
         let list = dictionaryStore.masterList;
 
         // Apply EXPLORE filters first if a topic is set
-        if (exploreTopicId.value && exploreTopicId.value.toLowerCase() !== 'all') {
+        if (exploreTopicId.value) {
             const topicIdLower = exploreTopicId.value.toLowerCase();
-            // TopicSelectionView synthesises a `pos:<part_of_speech>` topic id for the word-class
-            // group. That tag is never present in entry.tags, so it has to be matched against the
-            // field itself — same special case the categorized browse filter makes below.
-            const posValue = topicIdLower.startsWith('pos:') ? topicIdLower.slice(4) : null;
-            list = list.filter(entry => posValue !== null
-                ? entry.part_of_speech?.toLowerCase() === posValue
-                : entry.tags?.some(tag => tag.toLowerCase() === topicIdLower));
+            // The 'all' pseudo-topic spans the whole dictionary, so it gets no tag filter —
+            // but it is still a learning list and must honour the state filter like every
+            // other topic. Keeping that filter inside the tag branch meant words already
+            // kept or ignored kept coming back in 'Alle Wörter', so triaging one from the
+            // list or from the detail view appeared to do nothing.
+            if (topicIdLower !== 'all') {
+                // TopicSelectionView synthesises a `pos:<part_of_speech>` topic id for the word-class
+                // group. That tag is never present in entry.tags, so it has to be matched against the
+                // field itself — same special case the categorized browse filter makes below.
+                const posValue = topicIdLower.startsWith('pos:') ? topicIdLower.slice(4) : null;
+                list = list.filter(entry => posValue !== null
+                    ? entry.part_of_speech?.toLowerCase() === posValue
+                    : entry.tags?.some(tag => tag.toLowerCase() === topicIdLower));
+            }
             list = list.filter(word => word.metadata.state === exploreFilterState.value);
             return list;
         }

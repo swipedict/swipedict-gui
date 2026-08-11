@@ -36,7 +36,9 @@
     </div>
 
      <!-- Etymology (from content prop), now toggleable -->
-     <div v-if="content.etymology?.explanation" class="text-xs text-gray-500 dark:text-slate-400 mt-2" :class="{ 'md:text-right': lang === targetLanguage }">
+     <!-- text-sm, not text-xs: the etymology is prose meant to be read, and it sat a
+          step below the note directly beneath it. -->
+     <div v-if="content.etymology?.explanation" class="text-sm leading-relaxed text-gray-500 dark:text-slate-400 mt-2" :class="{ 'md:text-right': lang === targetLanguage }">
         <div class="flex items-start gap-2" :class="{ 'md:flex-row-reverse': lang === targetLanguage }">
             <div class="flex items-center gap-0.5 flex-shrink-0 mt-px">
                 <button @click="toggleEtymology" class="p-1 rounded-full text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700" :title="$t('detailView.tooltips.toggleEtymology')">

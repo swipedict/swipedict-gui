@@ -211,7 +211,12 @@ async function updateWordState(newState: UserState) {
     try {
         await dictionaryStore.updateWordState({ id: props.wordId, newState });
         emitter.emit('show-notification', { message: t('detailView.state.notificationSuccess', { newState }), type: 'success', duration: 1500 });
-        if (newState === 'IGNORED' || newState === 'NONE') goBack();
+        // Return to the list for every state, KEEP included. Triaging a word from
+        // the detail view is the same decision as swiping the card, so it should
+        // end the same way: back in the list with that word gone from it. KEEP
+        // used to be the odd one out, leaving the user parked on a word they had
+        // just finished with.
+        goBack();
     } catch (error) {
         emitter.emit('show-notification', { message: t('detailView.state.notificationError'), type: 'error' });
     } finally {
